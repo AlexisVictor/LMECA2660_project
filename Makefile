@@ -1,8 +1,8 @@
 
-INC_DIR := -I/opt/homebrew/Cellar/petsc/3.19/include#/usr/local/opt/petsc/include
-LIB_DIR := -L/opt/homebrew/Cellar/petsc/3.19/lib#/usr/local/opt/petsc/lib
+INC_DIR := -I/opt/homebrew/Cellar/petsc/3.19.0/include#/usr/local/opt/petsc/include
+LIB_DIR := -L/opt/homebrew/Cellar/petsc/3.19.0/lib#/usr/local/opt/petsc/lib
 
-LIB := -lpetsc.3.19
+LIB := -lpetsc.3.19.0
 
 CXX_FLAGS := -O0 -Wall -Werror #-g
 
