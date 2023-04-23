@@ -6,16 +6,20 @@
 /*Modification to do :*/
 /*    -Impose zero mass flow here by changing value of U_star*/
 /*    -Fill vector rhs*/
-void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd)
+void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix U, matrix V)
 {
 
     //YOU MUST IMPOSE A ZERO-MASS FLOW HERE ...
 
     int r;
-    for(r=rowStart; r<rowEnd ; r++){
-		    rhs[r] = 5; /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
-        /*Do not forget that the solution for the Poisson equation is defined within a constant.
-        One point from Phi must then be set to an abritrary constant.*/
+    for (int i = 1; i < n; i++){
+        for (int j = 1; j< m; j++ ){
+            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j]-U->a[i][j] + V->a[i][j+1]-V->a[i][j]); 
+            //notes pour trop tards: size of U and V = (m+1, n+1)
+            /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
+            /*Do not forget that the solution for the Poisson equation is defined within a constant.
+            One point from Phi must then be set to an abritrary constant.*/
+        }
     }
 
 }
@@ -26,7 +30,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd)
 /*Modification to do :*/
 /*    - Change the call to computeRHS as you have to modify its prototype too*/
 /*    - Copy solution of the equation into your vector PHI*/
-void poisson_solver(Poisson_data *data)
+void poisson_solver(Poisson_data *data, matrix U, matrix V, matrix phi)
 {
 
     /* Solve the linear system Ax = b for a 2-D poisson equation on a structured grid */
@@ -41,7 +45,7 @@ void poisson_solver(Poisson_data *data)
     /* Fill the right-hand-side vector : b */
     VecGetOwnershipRange(b, &rowStart, &rowEnd);
     VecGetArray(b, &rhs);
-    computeRHS(rhs, rowStart, rowEnd); /*MODIFY THE PROTOTYPE HERE*/
+    computeRHS(rhs, rowStart, rowEnd, m, n, ); /*MODIFY THE PROTOTYPE HERE*/
     VecRestoreArray(b, &rhs);
 
 
@@ -55,6 +59,7 @@ void poisson_solver(Poisson_data *data)
     int r;
     for(r=rowStart; r<rowEnd; r++){
         /*YOUR VECTOR PHI[...]*/ // = sol[r];
+        phi->data[r] = x[r];
     }
 
     VecRestoreArray(x, &sol);
@@ -117,7 +122,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
         MatSetValue(A, r, r+n , 1.0/3.0, INSERT_VALUES);
     }
     for (int i = 1; i < n-1; i++){
-        for (int j = 1; j< m-1; j++ )
+        for (int j = 1; j< m-1; j++ ){
         r = i*m+j
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 0.25, INSERT_VALUES);
@@ -127,8 +132,8 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
         /*USING MATSETVALUE FUNCTION, INSERT THE GOOD FACTOR AT THE GOOD PLACE*/
         /*Be careful; the solution from the system solved is defined within a constant.
         One point from Phi must then be set to an abritrary constant.*/
+        }
     }
-
 }
 
 /*To call during the initialization of your solver, before the begin of the time loop*/
@@ -141,6 +146,8 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data)
     PetscInt rowStart; /*rowStart = 0*/
     PetscInt rowEnd; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
+    int m; 
+    int n;
 
 	  int nphi = 5; /*WRITE HERE THE NUMBER OF UNKNOWS*/
 
@@ -161,7 +168,7 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data)
     MatSeqAIJSetPreallocation(data->A,5, NULL); // /*SET HERE THE NUMBER OF NON-ZERO DIAGONALS*/
     MatGetOwnershipRange(data->A, &rowStart, &rowEnd);
 
-    computeLaplacianMatrix(data->A, rowStart, rowEnd);
+    computeLaplacianMatrix(data->A, rowStart, rowEnd, m, n);
     ierr = MatAssemblyBegin(data->A, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
     ierr = MatAssemblyEnd(data->A, MAT_FINAL_ASSEMBLY);

@@ -17,6 +17,15 @@ typedef struct {
 
 } Poisson_data;
 
+typedef struct {
+int m, n; // dimensions de la matrice
+double *data; // tableau 1D de taille m*n contenant les entrees de la matrice
+double **a; // tableau 1D de m pointeurs vers chaque ligne, pour pouvoir appeler a[i][j]
+int* p; // Tableau qui reprend le vecteur du pivot
+} matrix;
+
+
+
 PetscErrorCode initialize_poisson_solver(Poisson_data* data);
 void poisson_solver(Poisson_data *data);
 void free_poisson_solver(Poisson_data* data);
