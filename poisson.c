@@ -67,12 +67,63 @@ void poisson_solver(Poisson_data *data)
 /*More than probably, you should need to add arguments to the prototype ... .*/
 /*Modification to do in this function : */
 /*   -Insert the correct factor in matrix A*/
-void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd)
+void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
 {
 
     int r;
-    for (r = rowStart; r < rowEnd; r++){
-        MatSetValue(A, r, r , 1.0, INSERT_VALUES);
+    // if bord 
+    //coin inférieur gauche 
+    MatSetValue(A, 0, 0 , -1.0, INSERT_VALUES);
+    MatSetValue(A, 0, 1 , 0.5, INSERT_VALUES);
+    MatSetValue(A, 0, n , 0.5, INSERT_VALUES);
+    //coin superieur gauche 
+    MatSetValue(A, m-1, m-1, -1.0, INSERT_VALUES);
+    MatSetValue(A, m-1, m-2 , 0.5, INSERT_VALUES);
+    MatSetValue(A, m-1, 2*m-1 , 0.5, INSERT_VALUES);
+    //coin inférieur droit 
+    MatSetValue(A, m*(n-1), m*(n-1), -1.0, INSERT_VALUES);
+    MatSetValue(A, m*(n-1), m*(n-1)+1 , 0.5, INSERT_VALUES);
+    MatSetValue(A, m*(n-1), m*(n-2) , 0.5, INSERT_VALUES);
+    //coin supérieur gauche 
+    MatSetValue(A, m*n-1, m*n-1, -1.0, INSERT_VALUES);
+    MatSetValue(A, m*n-1, m*n-2 , 0.5, INSERT_VALUES);
+    MatSetValue(A, m*n-1, m*(n-1)-1 , 0.5, INSERT_VALUES);
+    //bord droit 
+    for(r = 1; r < n-1; r++){
+        MatSetValue(A, r, r , -1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
+    }
+    //bord gauche 
+    for(r = (n-1)*m; r < n*m-1; r++){
+        MatSetValue(A, r, r , -1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
+    }
+    //bord inférieur 
+    for(r = m; r < m*(n-1); r+=m){
+        MatSetValue(A, r, r , -1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
+    }
+    //bord supérieur
+    for(r = 2*m-1; r < m*(n-1)-1; r+=m){
+        MatSetValue(A, r, r , -1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-n , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+n , 1.0/3.0, INSERT_VALUES);
+    }
+    for (int i = 1; i < n-1; i++){
+        for (int j = 1; j< m-1; j++ )
+        r = i*m+j
+        MatSetValue(A, r, r , -1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 0.25, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 0.25, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 0.25, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 0.25, INSERT_VALUES);
         /*USING MATSETVALUE FUNCTION, INSERT THE GOOD FACTOR AT THE GOOD PLACE*/
         /*Be careful; the solution from the system solved is defined within a constant.
         One point from Phi must then be set to an abritrary constant.*/
