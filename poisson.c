@@ -30,7 +30,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
 /*Modification to do :*/
 /*    - Change the call to computeRHS as you have to modify its prototype too*/
 /*    - Copy solution of the equation into your vector PHI*/
-void poisson_solver(Poisson_data *data, matrix U, matrix V, matrix phi)
+void poisson_solver(Poisson_data *data, double inv_delta_tx, matrix U, matrix V, matrix phi)
 {
 
     /* Solve the linear system Ax = b for a 2-D poisson equation on a structured grid */
@@ -45,7 +45,7 @@ void poisson_solver(Poisson_data *data, matrix U, matrix V, matrix phi)
     /* Fill the right-hand-side vector : b */
     VecGetOwnershipRange(b, &rowStart, &rowEnd);
     VecGetArray(b, &rhs);
-    computeRHS(rhs, rowStart, rowEnd, m, n, ); /*MODIFY THE PROTOTYPE HERE*/
+    computeRHS(rhs, rowStart, rowEnd, m, n, inv_delta_tx, U, V); /*MODIFY THE PROTOTYPE HERE*/
     VecRestoreArray(b, &rhs);
 
 
@@ -72,7 +72,7 @@ void poisson_solver(Poisson_data *data, matrix U, matrix V, matrix phi)
 /*More than probably, you should need to add arguments to the prototype ... .*/
 /*Modification to do in this function : */
 /*   -Insert the correct factor in matrix A*/
-void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
+void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 {
 
     int r;
@@ -80,7 +80,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
     //coin inférieur gauche 
     MatSetValue(A, 0, 0 , -1.0, INSERT_VALUES);
     MatSetValue(A, 0, 1 , 0.5, INSERT_VALUES);
-    MatSetValue(A, 0, n , 0.5, INSERT_VALUES);
+    MatSetValue(A, 0, m , 0.5, INSERT_VALUES);
     //coin superieur gauche 
     MatSetValue(A, m-1, m-1, -1.0, INSERT_VALUES);
     MatSetValue(A, m-1, m-2 , 0.5, INSERT_VALUES);
@@ -93,15 +93,15 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
     MatSetValue(A, m*n-1, m*n-1, -1.0, INSERT_VALUES);
     MatSetValue(A, m*n-1, m*n-2 , 0.5, INSERT_VALUES);
     MatSetValue(A, m*n-1, m*(n-1)-1 , 0.5, INSERT_VALUES);
-    //bord droit 
-    for(r = 1; r < n-1; r++){
+    //bord gauche 
+    for(r = 1; r < m-1; r++){
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
         MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
         MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
     }
-    //bord gauche 
-    for(r = (n-1)*m; r < n*m-1; r++){
+    //bord droit 
+    for(r = m*(n-1)+1; r < n*m-1; r++){
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
         MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
@@ -115,7 +115,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
         MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
     }
     //bord supérieur
-    for(r = 2*m-1; r < m*(n-1)-1; r+=m){
+    for(r = 2*m-1; r < m*n-1; r+=m){
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
         MatSetValue(A, r, r-n , 1.0/3.0, INSERT_VALUES);
@@ -123,7 +123,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int n, int m)
     }
     for (int i = 1; i < n-1; i++){
         for (int j = 1; j< m-1; j++ ){
-        r = i*m+j
+        r = i*m+j;
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 0.25, INSERT_VALUES);
         MatSetValue(A, r, r+1 , 0.25, INSERT_VALUES);
