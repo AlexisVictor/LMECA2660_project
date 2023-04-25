@@ -89,7 +89,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
     MatSetValue(A, m*(n-1), m*(n-1), -1.0, INSERT_VALUES);
     MatSetValue(A, m*(n-1), m*(n-1)+1 , 0.5, INSERT_VALUES);
     MatSetValue(A, m*(n-1), m*(n-2) , 0.5, INSERT_VALUES);
-    //coin supérieur gauche 
+    //coin supérieur droit 
     MatSetValue(A, m*n-1, m*n-1, -1.0, INSERT_VALUES);
     MatSetValue(A, m*n-1, m*n-2 , 0.5, INSERT_VALUES);
     MatSetValue(A, m*n-1, m*(n-1)-1 , 0.5, INSERT_VALUES);
