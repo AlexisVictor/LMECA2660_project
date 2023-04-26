@@ -20,7 +20,6 @@ void free_matrix(matrix *mat) {
     free(mat);   
 }
 
-
 int write_matrix_to_file(matrix *mat, char const *fileName, int nb_equation){
     FILE *file =fopen(fileName, "w");
     if (file == NULL)return -1;
@@ -72,14 +71,14 @@ int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double delta_x
     //     }
     for (int i=0; i<P->n; i++){
         for (int j=0;j<P->m-1; j++ ){
-            grad_Px->a[i][j] = 1/delta_x (P->a[i][j+1] - P->a[i][j]); 
+            grad_Py->a[i][j] = 1/delta_y (P->a[i][j+1] - P->a[i][j]); 
         }
         // grad_Px->a[i][m] = 1/delta_x (pressbords - P->a[i][m])
     }
     return 0; 
 }
 
-int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, double delta_x, double delta_y, int m, int n){
+int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, matrix *V, double delta_x, double delta_y, int m, int n){
     for (int i=1; i<n; i++){
         for (int j=1;j<m; j++ ){
             lapV->a[i][j] = 1/(delta_x*delta_x)*((V->a[i+1][j] - 2*V->a[i][j] + V->a[i-1][j])) 
@@ -102,9 +101,63 @@ int laplacian_temperature(matrix *LapT, matrix *T, double delta_x, double delta_
     return 0;
 }
 
-int convective_temperature(matrix Ht, matrix *T, double delta_x, double delta_y, int m, int n){
-    
+int convective_temperature(matrix *Ht, matrix *T, double delta_x, double delta_y, int m, int n){
+    double temp = 0;
+    for (int i=1; i<n; i++){
+        for (int j=1;j<m; j++){
+            temp = (U->a[i][j]/delta_x*(T->a[i+1][j+1]-T->a[i-1][j])) + (U->a[i+1][j]/delta_x*(T->a[i+1][j]-T->a[i][j])) +
+                         (V->a[i][j]/delta_y*(T->a[i][j]-T->a[i][j-1]))+(V->a[i][j+1]/delta_y*(T->a[i][j+1]-T->a[i][j]));
+            Ht->a[i][j] = 0.5*temp;
+        }
+    }
+    return 0;
 }
+
+int BorderTemp(matrix *T, double delta_x, double delta_y, int m, int n, double qwallk, double l0){
+
+    /*Plus sur de l'ordre des index i et j à checker absolument!!!*/
+
+    for (int j=1;j<m; j++){
+        //Left Surface : 
+        T->a[0][j] = T->a[1][j];
+        //Right Surface : 
+        T->a[n+1][j] = T->a[n][j];
+        }    
+    double Tgamma;
+    for (int i=1;i<n; i++){
+        //Free Surface : 
+        Tgamma = l0/(delta_y+l0) * T->a[i][m];
+        T->a[i][m+1] = -1/5* (T->a[i][m-2]-5*T->a[i][m-1]+15*T->a[i][m]-16*Tgamma);
+
+        //Bottom Surface : 
+        Tgamma = delta_y*qwallk + T->a[i][1];
+        T->a[i][0] = -1/5* (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
+    }
+    return 0;
+
+}
+
+/*
+int equation1(matrix *convective, matrix *convectiveprev, matrix *U, matrix *V, double dt,
+            matrix *Vestim, matrix *Uestim, matrix *grad_Px, matrix *grad_Py, matrix *LapU, matrix *LapV, matrix *T){
+
+    double temp;
+
+    for (i = 1; i < n; i++){
+        for (j = 1; j< m+1; j++ ){
+            temp = 
+        }
+    }
+    for (i = 1; i < n+1; i++){
+        for (j = 1; j< m; j++){
+
+        }
+    }
+    return 0;
+              }
+
+*/
+
 int main(int argc, char *argv[]){
 
     PetscInitialize(&argc, &argv, 0, 0);
@@ -112,18 +165,36 @@ int main(int argc, char *argv[]){
     int n = 16; 
     double delta_x ; //to specify 
     double delta_y ; //to specify 
+    double SimTime; //to specify
+    double t = 0;
+    double dt; //to specify
     
     /*WRITE YOUR PROJECT ...*/
-    matrix *V = callocate_matrix(m+1, n+3);
-    matrix *U = callocate_matrix(m+3, n+1); 
+    matrix *V = callocate_matrix(m+1, n+2);
+    matrix *U = callocate_matrix(m+2, n+1); 
+    matrix *Vestim = callocate_matrix(m+1, n+2);
+    matrix *Uestim= = callocate_matrix(m+2, n+1);
     matrix *P = callocate_matrix(m, n); 
+    matrix *T = callocate_matrix(m+2, n+2); 
     matrix *phi = callocate_matrix(m, n); 
-    matrix *H_y = callocate_matrix(m+1, n+3);
-    matrix *H_x = callocate_matrix(m+3, n+1);
-    matrix *H_y_nplus1 = callocate_matrix(m+1, n+3);
-    matrix *H_x_nplus1 = callocate_matrix(m+3, n+1);
+    matrix *H_y = callocate_matrix(m+1, n+2);
+    matrix *H_x = callocate_matrix(m+2, n+1);
+    matrix *Ht = callocate_matrix(m, n);
+    matrix *grad_Px = callocate_matrix(m, n);
+    matrix *grad_Py = callocate_matrix(m, n);
+    matrix *LapU = callocate_matrix(m, n);
+    matrix *lapV = callocate_matrix(m, n);
+    matrix *LapT = callocate_matrix(m, n);
+    
 
     // Boucle temporel
+    int iter = 0;
+    while (t<SimTime){
+
+
+        iter++;
+        t += dt;
+    }
 
 
     PetscFinalize();
