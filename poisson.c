@@ -6,16 +6,16 @@
 /*Modification to do :*/
 /*    -Impose zero mass flow here by changing value of U_star*/
 /*    -Fill vector rhs*/
-void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix U, matrix V)
+void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix *U, matrix *V)
 {
 
     //YOU MUST IMPOSE A ZERO-MASS FLOW HERE ...
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j< m; j++ ){
+            // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
+            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
+            //notes pour trop tards: size of U = (m, n+1) and V = (m+1, n)
 
-    int r;
-    for (int i = 1; i < n; i++){
-        for (int j = 1; j< m; j++ ){
-            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j]-U->a[i][j] + V->a[i][j+1]-V->a[i][j]); 
-            //notes pour trop tards: size of U and V = (m+1, n+1)
             /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
             /*Do not forget that the solution for the Poisson equation is defined within a constant.
             One point from Phi must then be set to an abritrary constant.*/
@@ -30,7 +30,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
 /*Modification to do :*/
 /*    - Change the call to computeRHS as you have to modify its prototype too*/
 /*    - Copy solution of the equation into your vector PHI*/
-void poisson_solver(Poisson_data *data, double inv_delta_tx, matrix U, matrix V, matrix phi)
+void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *U, matrix *V, matrix *phi)
 {
 
     /* Solve the linear system Ax = b for a 2-D poisson equation on a structured grid */
@@ -56,10 +56,10 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx, matrix U, matrix V,
 
     VecGetArray(x, &sol);
 
-    int r;
-    for(r=rowStart; r<rowEnd; r++){
+
+    for(int r = rowStart; r<rowEnd; r++){
         /*YOUR VECTOR PHI[...]*/ // = sol[r];
-        phi->data[r] = x[r];
+        phi->data[r] = sol[r];
     }
 
     VecRestoreArray(x, &sol);
@@ -74,7 +74,6 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx, matrix U, matrix V,
 /*   -Insert the correct factor in matrix A*/
 void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 {
-
     int r;
     // if bord 
     //coin inférieur gauche 
@@ -141,15 +140,12 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 /*Modification to do in this function :*/
 /*   -Specify the number of unknows*/
 /*   -Specify the number of non-zero diagonals in the sparse matrix*/
-PetscErrorCode initialize_poisson_solver(Poisson_data* data)
+PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
 {
-    PetscInt rowStart; /*rowStart = 0*/
-    PetscInt rowEnd; /*rowEnd = the number of unknows*/
+    PetscInt rowStart = 0; /*rowStart = 0*/
+    PetscInt rowEnd = m*n; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
-    int m; 
-    int n;
-
-	  int nphi = 5; /*WRITE HERE THE NUMBER OF UNKNOWS*/
+    int nphi = m*n; /*WRITE HERE THE NUMBER OF UNKNOWS*/
 
     /* Create the right-hand-side vector : b */
     VecCreate(PETSC_COMM_WORLD, &(data->b));
