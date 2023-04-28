@@ -102,13 +102,13 @@ int laplacian_temperature(matrix *LapT, matrix *T, double deltax, double deltay,
 }
 
 int convective_temperature(matrix *Ht, matrix *T, double deltax, double deltay, int m, int n){
-    double temp = 0;
-    for (int i=1; i<n; i++){
-        for (int j=1;j<m; j++){
-            temp = (U->a[i][j]/deltax*(T->a[i+1][j+1]-T->a[i-1][j])) + (U->a[i+1][j]/deltax*(T->a[i+1][j]-T->a[i][j])) +
-                         (V->a[i][j]/deltay*(T->a[i][j]-T->a[i][j-1]))+(V->a[i][j+1]/deltay*(T->a[i][j+1]-T->a[i][j]));
-            Ht->a[i][j] = 0.5*temp;
+    for (int i=1; i<n+1; i++){
+        for (int j=1;j<m+1; j++){
+            Ht->a[i][j] = 0.5/deltax*(U->a[i][j]*(T->a[i][j]-T->a[i-1][j])) + (U->a[i+1][j]*(T->a[i+1][j]-T->a[i][j])) 
+                        + 0.5/deltay*(V->a[i][j]*(T->a[i][j]-T->a[i][j-1])) + (V->a[i][j+1]*(T->a[i][j+1]-T->a[i][j]));
+           
         }
+        Ht->a[i][m+1] = -1/5*(T->a[i][m-2] - 5)
     }
     return 0;
 }
@@ -271,8 +271,22 @@ int main(int argc, char *argv[]){
 
     PetscFinalize();
     free_matrix(V);
-    free_matrix(U);
-    free_matrix(P);
-    free_matrix(phi);
+    free_matrix(U); 
+    free_matrix(Vestim);
+    free_matrix(Uestim);
+    free_matrix(P); 
+    free_matrix(T); 
+    free_matrix(phi); 
+    free_matrix(Hy);
+    free_matrix(Hx);
+    free_matrix(Ht);
+    free_matrix(Hyold);
+    free_matrix(Hxold);
+    free_matrix(Htold);
+    free_matrix(grad_Px);
+    free_matrix(grad_Py);
+    free_matrix(LapU);
+    free_matrix(LapV);
+    free_matrix(LapT);
 
 }
