@@ -4,7 +4,7 @@ LIB_DIR := -L/opt/homebrew/Cellar/petsc/3.19.0/lib#/usr/local/opt/petsc/lib
 
 LIB := -lpetsc.3.19.0
 
-CXX_FLAGS := -O0 -Wall -Werror #-g
+CXX_FLAGS := -O0 -Wall #-Werror #-g
 
 #Compilation
 all :

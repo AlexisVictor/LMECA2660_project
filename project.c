@@ -1,16 +1,21 @@
 #include "poisson.h"
 #include "math.h"
 
+
+
 matrix* callocate_matrix(int m, int n) {
     // size_t nitems, size_t size
 	matrix *mat = (matrix*) malloc(sizeof(matrix));
 	mat->m = m, mat->n = n;
 	mat->data = (double*) calloc(m*n, sizeof(double));
 	if(mat->data == NULL) return NULL;
-	mat->a = (double**)malloc(m*sizeof(double*));
+	mat->a = (double**)malloc(n*sizeof(double*));
+    // mat->a = (double**)malloc(m*sizeof(double*));
 	if (mat->a == NULL) return NULL;
-	for (int i = 0; i < m; i++)
-		mat->a[i] = mat->data+i*n;
+	// for (int i = 0; i < m; i++)
+	// 	mat->a[i] = mat->data+i*n;
+    for (int i = 0; i < n; i++)
+		mat->a[i] = mat->data+i*m;
 	return mat;
 }
 
@@ -33,6 +38,15 @@ int write_matrix_to_file(matrix *mat, char const *fileName, int nb_equation){
     fclose(file);
     return 0;
 }
+int print_matrix(matrix *mat){
+    for (int i = 0; i <mat->n;i++){
+        for (int j=0; j < mat->m;j++){
+            printf("%.6e ", mat->a[i][j]);
+        }
+        printf("\n");
+    }
+    return 0;
+}
 int convective_velocity(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double deltax, double deltay, int m, int n){
     int i,j;
     //calcul of the convective term away from the side of the domain 
@@ -41,20 +55,23 @@ int convective_velocity(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double d
         V->a[n+1][j] = -1.0/5 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
     }
     for (i = 0; i<n+1; i++){
-        U->a[i][0] = -1.0/5 *(U->a[3][i] - 5*U->a[2][i] + 15*U->a[1][i]);
+        U->a[i][0] = -1.0/5 *(U->a[i][3] - 5*U->a[i][3] + 15*U->a[i][1]);
         U->a[i][m+1] = U->a[i][m];//-1/5 *(U->a[m+1-3][i] - 5*U->a[m+1-2][i] + 15*U->a[m+1-1][i])
     }
     for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){
-            H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j]) 
-                            + 1.0/(4*deltay) * ((V->a[i][j+1] + V->a[i-1][j+1]) * (U->a[i][j+1] - U->a[i][j])
-                            + (V->a[i-1][j] + V->a[i-1][j-1]) * (U->a[i][j] - U->a[i][j-1]));
+        for (j = 1; j< m+1; j++ ){ // decalle les indices des V de 1 vers la droite 
+            // H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j]) 
+            //                 + 1.0/(4*deltay) * ((V->a[i][j+1] + V->a[i-1][j+1]) * (U->a[i][j+1] - U->a[i][j])
+            //                                   + (V->a[i-1][j] + V->a[i-1][j-1]) * (U->a[i][j] - U->a[i][j-1]));
+            H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j])  //ligne pas encore verif 
+                            + 1.0/(4*deltay) * ((V->a[i][j] + V->a[i+1][j]) * (U->a[i][j+1] - U->a[i][j])
+                                              + (V->a[i][j-1] + V->a[i+1][j-1]) * (U->a[i][j] - U->a[i][j-1]));
         }
     }
     for (i = 1; i < n+1; i++){
-        for (j = 1; j< m; j++){
-            H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i+1][j] + U->a[i+1][j-1]) * (V->a[i+1][j] - V->a[i][j]) 
-                            + (U->a[i][j] + U->a[i][j-1]) * (V->a[i][j] - V->a[i-1][j]))
+        for (j = 1; j< m; j++){ // decalle les indice des U de 1 vers le le haute
+            H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i][j] + U->a[i][j-1]) * (V->a[i+1][j] - V->a[i][j]) 
+                                             + (U->a[i-1][j] + U->a[i-1][j-1]) * (V->a[i][j] - V->a[i-1][j]))
                             + 1.0/(4*deltay) * (V->a[i][j+1]*V->a[i][j+1] - V->a[i][j-1]*V->a[i][j-1]);
         }
     }
@@ -81,14 +98,17 @@ int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double deltax,
 
 int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, matrix *V, double deltax, double deltay, int m, int n){
     for (int i=1; i<n; i++){
-        for (int j=1;j<m; j++ ){
-            LapV->a[i][j] = 1.0/(deltax*deltax)*((V->a[i+1][j] - 2*V->a[i][j] + V->a[i-1][j])) 
-                          + 1.0/(deltay*deltay)*(V->a[i][j+1] - 2*V->a[i][j] + V->a[i][j-1]); //A verifier on a compute ca trop vite
-
+        for (int j=1;j<m+1; j++){
             LapU->a[i][j] = 1.0/(deltax*deltax)*((U->a[i+1][j] - 2*U->a[i][j] + U->a[i-1][j])) 
                           + 1.0/(deltay*deltay)*(U->a[i][j+1] - 2*U->a[i][j] + U->a[i][j-1]); //A verifier on a compute ca trop vite 
         }
     }
+    for (int i=1; i<n+1; i++){
+        for (int j=1;j<m; j++ ){
+            LapV->a[i][j] = 1.0/(deltax*deltax)*((V->a[i+1][j] - 2*V->a[i][j] + V->a[i-1][j])) 
+                          + 1.0/(deltay*deltay)*(V->a[i][j+1] - 2*V->a[i][j] + V->a[i][j-1]); //A verifier on a compute ca trop vite
+            } 
+        }
     return 0;
 }
 
@@ -105,8 +125,8 @@ int laplacian_temperature(matrix *LapT, matrix *T, double deltax, double deltay,
 int convective_temperature(matrix *Ht, matrix *T, matrix *U, matrix *V, double deltax, double deltay, int m, int n){
     for (int i=1; i<n+1; i++){
         for (int j=1;j<m+1; j++){
-            Ht->a[i][j] = (1.0/2.0*deltax)*(U->a[i][j]*(T->a[i][j]-T->a[i-1][j])) + (U->a[i+1][j]*(T->a[i+1][j]-T->a[i][j])) 
-                        + (1.0/2.0*deltay)*(V->a[i][j]*(T->a[i][j]-T->a[i][j-1])) + (V->a[i][j+1]*(T->a[i][j+1]-T->a[i][j]));
+            Ht->a[i][j] = (1.0/2.0*deltax)*(U->a[i-1][j]*(T->a[i][j]-T->a[i-1][j])) + (U->a[i][j]*(T->a[i+1][j]-T->a[i][j])) 
+                        + (1.0/2.0*deltay)*(V->a[i][j-1]*(T->a[i][j]-T->a[i][j-1])) + (V->a[i][j]*(T->a[i][j+1]-T->a[i][j]));
            
         }
     }
@@ -202,21 +222,24 @@ int initialPressure(){
 
 int main(int argc, char *argv[]){
 
-    PetscInitialize(&argc, &argv, 0, 0);
-    int n = 16; 
-    int m = (int) 1.5*n; 
+
+    int n = 4; 
+    int m = 4;//(int) 1.5*n; 
     double deltax = 0.1; //to specify 
     double deltay = 0.1; //to specify 
     double SimTime = 15.0; //to specify
-    double t = 0;
+    double t = 0.0;
     double dt= 1.0; //to specify
-    double Pr = 4;
+    double Pr = 4.0;
     double Gr = 10e10;
     int iter = 0;
         
     /*WRITE YOUR PROJECT ...*/
     matrix *V = callocate_matrix(m+1, n+2);
     matrix *U = callocate_matrix(m+2, n+1); 
+    matrix *LapU = callocate_matrix(m+2, n+1);
+    matrix *LapV = callocate_matrix(m+1, n+2);
+    matrix *LapT = callocate_matrix(m+2, n+2);
     matrix *Vestim = callocate_matrix(m+1, n+2);
     matrix *Uestim = callocate_matrix(m+2, n+1);
     matrix *P = callocate_matrix(m, n); 
@@ -230,16 +253,14 @@ int main(int argc, char *argv[]){
     matrix *Htold = callocate_matrix(m+2, n+2);
     matrix *grad_Px = callocate_matrix(m, n);
     matrix *grad_Py = callocate_matrix(m, n);
-    matrix *LapU = callocate_matrix(m+2, n+1);
-    matrix *LapV = callocate_matrix(m+1, n+2);
-    matrix *LapT = callocate_matrix(m+2, n+2);
-    
-
-    Poisson_data* data = NULL;
+    printf("this is nimportequoi %f \n", Htold->data[0]);
+    Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
     double inv_delta_tx = deltax/dt;
+    int a = 3; 
+    // PetscInitialize(&a, &argv, 0, 0);    
     while (t<SimTime){
 
-        //Actualisation
+        // Actualisation
         memcpy( Hxold->a, Hx->a,  sizeof(double)*(m+2)*(n+1) ); 
         memcpy( Hyold->a, Hy->a,  sizeof(double)*(m+1)*(n+2) ); 
         memcpy( Htold->a, Ht->a,  sizeof(double)*(m+2)*(n+2) ); 
@@ -249,15 +270,14 @@ int main(int argc, char *argv[]){
         laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n);
         laplacian_temperature(LapT, T, deltax, deltay, m, n);
         pressure_gradure(grad_Px, grad_Py, P, deltax, deltay);
-
-        evalEstimVelocity(U, V, Hy, Hx, LapU, LapV,
-                        Hyold, Hxold, grad_Px, grad_Py, T, Uestim, 
-                        Vestim, m, n, dt, Gr);
-        /* Poisson */
+        evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
+                          T, Uestim, Vestim, m, n, dt, Gr);
         
-        initialize_poisson_solver(data, m, n);
-        poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
-        free_poisson_solver( data);
+        
+        /* Poisson */
+        // initialize_poisson_solver(data, m, n);
+        // poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
+        // free_poisson_solver( data);
 
         evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
         int i,j;
@@ -266,14 +286,16 @@ int main(int argc, char *argv[]){
                 P->a[i][j] += phi->a[i][j];
             }
         }
-        evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
+        // evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
 
+        print_matrix(grad_Py);
+        printf("yes lan \n");
         iter++;
         t += dt;
     }
 
 
-    PetscFinalize();
+    // PetscFinalize();
     free_matrix(V);
     free_matrix(U); 
     free_matrix(Vestim);
@@ -292,5 +314,4 @@ int main(int argc, char *argv[]){
     free_matrix(LapU);
     free_matrix(LapV);
     free_matrix(LapT);
-
 }
