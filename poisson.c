@@ -117,8 +117,8 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
     for(r = 2*m-1; r < m*n-1; r+=m){
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
-        MatSetValue(A, r, r-n , 1.0/3.0, INSERT_VALUES);
-        MatSetValue(A, r, r+n , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
     }
     for (int i = 1; i < n-1; i++){
         for (int j = 1; j< m-1; j++ ){
