@@ -2,6 +2,18 @@
 #include "math.h"
 
 
+void copy_matrix(matrix *dest, matrix *src) {
+    if (dest->m != src->m || dest->n != src->n) {
+        fprintf(stderr, "Error: matrices have different dimensions\n");
+        exit(1);
+    }
+    for (int i = 0; i < dest->n; i++) {
+        for (int j = 0; j < dest->m; j++) {
+            dest->a[i][j] = src->a[i][j];
+        }
+    }
+    }
+
 
 matrix* callocate_matrix(int m, int n) {
     // size_t nitems, size_t size
@@ -17,6 +29,35 @@ matrix* callocate_matrix(int m, int n) {
     for (int i = 0; i < n; i++)
 		mat->a[i] = mat->data+i*m;
 	return mat;
+}
+
+void FlowWriteFile(const char *baseResultName, int iter, matrix *U, matrix *V, matrix *P, matrix *T, int n, int m, int t)
+{
+    int i,j;
+    const char *basename = "%s-%08d.txt";
+    char filename[256];
+    sprintf(filename,basename,baseResultName,iter);
+    FILE* file = fopen(filename,"w");
+    if (file == NULL) {
+        printf("Error : cannot create result file : did you create the output directory ? \n");
+        exit(0); }
+    
+    fprintf(file, "Values at time %le", t);
+
+    fprintf(file," (i;j);\t U \t;V \t;T \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
+    for (i = 1; i < n; ++i) {
+    	for (j = 1; j < m; ++j) {
+        	fprintf(file," (%d;%d);\t %le \t;%le \t;%le \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
+            }
+        }
+
+    fprintf(file,"(i;j) \t;Pressure \t;\n");
+    for (i = 0; i < n; ++i) {
+    	for (j = 0; j < m; ++j) {
+            fprintf(file,"(%d;%d) \t;%le \t;\n",i,j,P->a[i][j]);
+            } 
+        }
+    fclose(file);
 }
 
 void free_matrix(matrix *mat) {
@@ -141,12 +182,12 @@ int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU
     double temp; 
     int i,j;
     for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){
+        for (j = 1; j< m; j++ ){
             temp = -1.0/2.0*(3.0*Hx->a[i][j] - Hxold->a[i][j]) - grad_Px->a[i][j] + pow(Gr,-1.0/2.0)*LapU->a[i][j];
             Uestim->a[i][j] = temp*dt + U->a[i][j];
         }
     }
-    for (i = 1; i < n+1; i++){
+    for (i = 1; i < n; i++){
         for (j = 1; j< m; j++){
             temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] - T->a[i][j];
             Vestim->a[i][j] = temp*dt + V->a[i][j];
@@ -159,12 +200,12 @@ int evalVelocity(matrix *phi, double dt, double deltax, double deltay, matrix *U
     int i,j;
     double temp;
     for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){
+        for (j = 1; j< m; j++ ){
             temp = (phi->a[i][j]-phi->a[i][j-1])/deltax;
             U->a[i][j] = temp*dt + Uestim->a[i][j];
         }
     }
-    for (i = 1; i < n+1; i++){
+    for (i = 1; i < n; i++){
         for (j = 1; j< m; j++){
             temp = (phi->a[i][j]-phi->a[i-1][j])/deltay;
             V->a[i][j] = temp*dt + Vestim->a[i][j];
@@ -235,6 +276,7 @@ int main(int argc, char *argv[]){
     int iter = 0;
         
     /*WRITE YOUR PROJECT ...*/
+    char *resultName = "output/ConvectionProject.out";
     matrix *V = callocate_matrix(m+1, n+2);
     matrix *U = callocate_matrix(m+2, n+1); 
     matrix *LapU = callocate_matrix(m+2, n+1);
@@ -253,31 +295,31 @@ int main(int argc, char *argv[]){
     matrix *Htold = callocate_matrix(m+2, n+2);
     matrix *grad_Px = callocate_matrix(m, n);
     matrix *grad_Py = callocate_matrix(m, n);
-    printf("this is nimportequoi %f \n", Htold->data[0]);
     Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
     double inv_delta_tx = deltax/dt;
-    int a = 3; 
-    // PetscInitialize(&a, &argv, 0, 0);    
+
+    FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
+
+    PetscInitialize(&argc, &argv, 0, 0);    
     while (t<SimTime){
 
-        // Actualisation
-        memcpy( Hxold->a, Hx->a,  sizeof(double)*(m+2)*(n+1) ); 
-        memcpy( Hyold->a, Hy->a,  sizeof(double)*(m+1)*(n+2) ); 
-        memcpy( Htold->a, Ht->a,  sizeof(double)*(m+2)*(n+2) ); 
+        copy_matrix(Hxold, Hx);
+        copy_matrix(Hyold, Hy);
+        copy_matrix(Htold, Ht);
     
         convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
         convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
-        laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n);
-        laplacian_temperature(LapT, T, deltax, deltay, m, n);
+        laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
+        laplacian_temperature(LapT, T, deltax, deltay, m, n); 
         pressure_gradure(grad_Px, grad_Py, P, deltax, deltay);
         evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
-                          T, Uestim, Vestim, m, n, dt, Gr);
+                          T, Uestim, Vestim, m, n, dt, Gr); 
         
         
         /* Poisson */
-        // initialize_poisson_solver(data, m, n);
-        // poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
-        // free_poisson_solver( data);
+        initialize_poisson_solver(data, m, n);
+        poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
+        free_poisson_solver( data); 
 
         evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
         int i,j;
@@ -286,16 +328,18 @@ int main(int argc, char *argv[]){
                 P->a[i][j] += phi->a[i][j];
             }
         }
-        // evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
+        evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
 
-        print_matrix(grad_Py);
-        printf("yes lan \n");
+        //print_matrix(U);
+        printf("Zizi Hihihi \n");
         iter++;
         t += dt;
+        
+        FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
     }
 
 
-    // PetscFinalize();
+    PetscFinalize();
     free_matrix(V);
     free_matrix(U); 
     free_matrix(Vestim);
@@ -307,11 +351,11 @@ int main(int argc, char *argv[]){
     free_matrix(Hx);
     free_matrix(Ht);
     free_matrix(Hyold);
-    free_matrix(Hxold);
+    free_matrix(Hxold); 
     free_matrix(Htold);
     free_matrix(grad_Px);
     free_matrix(grad_Py);
     free_matrix(LapU);
     free_matrix(LapV);
-    free_matrix(LapT);
+    free_matrix(LapT); 
 }
