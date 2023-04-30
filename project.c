@@ -261,9 +261,9 @@ int main(int argc, char *argv[]){
     while (t<SimTime){
 
         // Actualisation
-        memcpy( Hxold->a, Hx->a,  sizeof(double)*(m+2)*(n+1) ); 
-        memcpy( Hyold->a, Hy->a,  sizeof(double)*(m+1)*(n+2) ); 
-        memcpy( Htold->a, Ht->a,  sizeof(double)*(m+2)*(n+2) ); 
+        // memcpy( Hxold->a, Hx->a,  sizeof(double)*(m+2)*(n+1) ); 
+        // memcpy( Hyold->a, Hy->a,  sizeof(double)*(m+1)*(n+2) ); 
+        // memcpy( Htold->a, Ht->a,  sizeof(double)*(m+2)*(n+2) ); 
     
         convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
         convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
@@ -280,12 +280,12 @@ int main(int argc, char *argv[]){
         // free_poisson_solver( data);
 
         evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
-        int i,j;
-        for (i = 0; i < n; i++){
-            for (j = 0; j< m; j++){
-                P->a[i][j] += phi->a[i][j];
-            }
-        }
+        // int i,j;
+        // for (i = 0; i < n; i++){
+        //     for (j = 0; j< m; j++){
+        //         P->a[i][j] += phi->a[i][j];
+        //     }
+        // }
         // evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
 
         print_matrix(grad_Py);
