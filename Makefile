@@ -1,18 +1,17 @@
-INC_DIR := -I/home/thoussiau/Projet_2660/lib_petsc/include
-LIB_DIR := -L/home/thoussiau/Projet_2660/lib_petsc/lib -Wl,-rpath=/home/thoussiau/Projet_2660/lib_petsc/lib
+INC_DIR := -I/opt/homebrew/Cellar/petsc/3.19.0/include#/usr/local/opt/petsc/include
+LIB_DIR := -L/opt/homebrew/Cellar/petsc/3.19.0/lib#/usr/local/opt/petsc/lib
 
+LIB := -lpetsc.3.19.0
 
-LIB := -lpetsc
-
-CXX_FLAGS := -O0 -Wall -g #-Werror 
+CXX_FLAGS := -O0 -Wall #-Werror #-g
 
 #Compilation
 all :
-	gcc -o project project.c poisson.c -lm -lmpi $(CXX_FLAGS) $(LIB_DIR) $(LIB) $(INC_DIR)
+	mpicc -o project project.c poisson.c -lm -lmpi $(CXX_FLAGS) $(LIB_DIR) $(LIB) $(INC_DIR)
 
 #Delete of executable files
 clean :
-	rm project
+	rm projet
 
 #Delete of results
 clean_txt :

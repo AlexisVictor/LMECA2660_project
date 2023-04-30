@@ -13,7 +13,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
     for (int i = 0; i < n; i++){
         for (int j = 0; j< m; j++ ){
             // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
-            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
+            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1] - U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
             //notes pour trop tards: size of U = (m+1, n+2) and V = (m+1, n)
 
             /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
@@ -117,8 +117,8 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
     for(r = 2*m-1; r < m*n-1; r+=m){
         MatSetValue(A, r, r , -1.0, INSERT_VALUES);
         MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
-        MatSetValue(A, r, r-n , 1.0/3.0, INSERT_VALUES);
-        MatSetValue(A, r, r+n , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
     }
     for (int i = 1; i < n-1; i++){
         for (int j = 1; j< m-1; j++ ){
