@@ -42,12 +42,12 @@ void FlowWriteFile(const char *baseResultName, int iter, matrix *U, matrix *V, m
         printf("Error : cannot create result file : did you create the output directory ? \n");
         exit(0); }
     
-    fprintf(file, "Values at time %le", t);
+    fprintf(file, "Values at time %d", t);
 
-    fprintf(file," (i;j);\t U \t;V \t;T \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
+    fprintf(file," (i;j);\t U \t;V \t;T \t;\n");
     for (i = 1; i < n; ++i) {
     	for (j = 1; j < m; ++j) {
-        	fprintf(file," (%d;%d);\t %le \t;%le \t;%le \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
+            fprintf(file," (%d;%d);\t %le \t;%le \t;%le \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
             }
         }
 
@@ -276,7 +276,7 @@ int main(int argc, char *argv[]){
     int iter = 0;
         
     /*WRITE YOUR PROJECT ...*/
-    char *resultName = "output/ConvectionProject.out";
+    char *resultName = "output";
     matrix *V = callocate_matrix(m+1, n+2);
     matrix *U = callocate_matrix(m+2, n+1); 
     matrix *LapU = callocate_matrix(m+2, n+1);
@@ -329,13 +329,12 @@ int main(int argc, char *argv[]){
             }
         }
         evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
+        FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
 
         //print_matrix(U);
         printf("Zizi Hihihi \n");
         iter++;
         t += dt;
-        
-        FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
     }
 
 
