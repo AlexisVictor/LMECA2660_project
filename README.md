@@ -1,3 +1,3 @@
 # LMECA2660_project  
 
-Zizifesse
+Projet Méca de convection Naturelle

@@ -1,5 +1,6 @@
 #include "poisson.h"
 #include "math.h"
+#include "stdio.h"
 
 
 void copy_matrix(matrix *dest, matrix *src) {
@@ -12,7 +13,7 @@ void copy_matrix(matrix *dest, matrix *src) {
             dest->a[i][j] = src->a[i][j];
         }
     }
-    }
+}
 
 
 matrix* callocate_matrix(int m, int n) {
@@ -31,32 +32,23 @@ matrix* callocate_matrix(int m, int n) {
 	return mat;
 }
 
-void FlowWriteFile(const char *baseResultName, int iter, matrix *U, matrix *V, matrix *P, matrix *T, int n, int m, int t)
+void MatrixWriteFile(const char *baseResultName, int iter, matrix *mat, double t)
 {
     int i,j;
-    const char *basename = "%s-%08d.txt";
-    char filename[256];
+    const char *basename = "results/%s-%d.txt";
+    char filename[100];
     sprintf(filename,basename,baseResultName,iter);
     FILE* file = fopen(filename,"w");
     if (file == NULL) {
         printf("Error : cannot create result file : did you create the output directory ? \n");
         exit(0); }
     
-    fprintf(file, "Values at time %d", t);
-
-    fprintf(file," (i;j);\t U \t;V \t;T \t;\n");
-    for (i = 1; i < n; ++i) {
-    	for (j = 1; j < m; ++j) {
-            fprintf(file," (%d;%d);\t %le \t;%le \t;%le \t;\n",i,j,U->a[i][j],V->a[i][j],T->a[i][j]);
+    for (i = 0; i < mat->n; ++i) {
+    	for (j = 0; j < mat->m; ++j) {
+            fprintf(file,"%d;%d;%le;\n",i,j,mat->a[i][j]);
             }
         }
 
-    fprintf(file,"(i;j) \t;Pressure \t;\n");
-    for (i = 0; i < n; ++i) {
-    	for (j = 0; j < m; ++j) {
-            fprintf(file,"(%d;%d) \t;%le \t;\n",i,j,P->a[i][j]);
-            } 
-        }
     fclose(file);
 }
 
@@ -115,6 +107,38 @@ int convective_velocity(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double d
                                              + (U->a[i-1][j] + U->a[i-1][j-1]) * (V->a[i][j] - V->a[i-1][j]))
                             + 1.0/(4*deltay) * (V->a[i][j+1]*V->a[i][j+1] - V->a[i][j-1]*V->a[i][j-1]);
         }
+    }
+    return 0;
+}
+
+int convective_velocity_div(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double deltax, double deltay, int m, int n){
+    int i,j;
+    //calcul of the convective term away from the side of the domain 
+    for (j = 0; j<m+1; j++){
+        V->a[0][j] = -1.0/5 *(V->a[3][j] - 5*V->a[2][j] + 15*V->a[1][j]);
+        V->a[n+1][j] = -1.0/5 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
+    }
+    for (i = 0; i<n+1; i++){
+        U->a[i][0] = -1.0/5 *(U->a[i][3] - 5*U->a[i][3] + 15*U->a[i][1]);
+        U->a[i][m+1] = U->a[i][m];//-1/5 *(U->a[m+1-3][i] - 5*U->a[m+1-2][i] + 15*U->a[m+1-1][i])
+    }
+    for (i = 1; i < n; i++){
+        for (j = 1; j< m+1; j++ ){                                 
+            // H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - 2*U->a[i+1][j]*U->a[i][j] - U->a[i-1][j]*U->a[i-1][j] - 2*U->a[i][j]*U->a[i-1][j])  
+            //             + 1.0/(4*deltay) * (U->a[i][j+1]*V->a[i+1][j]) + U->a[i][j+1]*V->a[i][j-1] - U->a[i][j-1]*V->a[i+1][j-1] - U->a[i][j-1]*V->a[i][j-1];
+            H_x->a[i][j] =  1.0/(4.0*deltax) * ((U->a[i+1][j] + U->a[i][j]) * (U->a[i+1][j] + U->a[i][j]) - (U->a[i][j] + U->a[i-1][j]) * (U->a[i][j] + U->a[i-1][j]))
+                          + 1.0/(4.0*deltay) * ((U->a[i][j+1] + U->a[i][j]) * (V->a[i+1][j] + V->a[i-1][j]) - (U->a[i][j] + U->a[i][j-1]) * (V->a[i+1][j-1] + V->a[i][j-1]));
+
+        }
+    }
+    for (i = 1; i < n+1; i++){
+         for (j = 1; j< m; j++){ // decalle les indice des U de 1 vers le le haute
+            H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i][j+1] + U->a[i][j]) * (V->a[i+1][j] + V->a[i][j]) - (U->a[i-1][j+1] + U->a[i-1][j]) * (V->a[i][j] + V->a[i-1][j]))
+                         + 1.0/(4.0*deltay) * ((V->a[i][j+1] + V->a[i][j]) * (V->a[i][j+1] + V->a[i][j]) - (V->a[i][j] + V->a[i][j-1]) * (V->a[i][j] + V->a[i][j-1]));
+    //         H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i][j] + U->a[i][j-1]) * (V->a[i+1][j] - V->a[i][j]) 
+    //                                          + (U->a[i-1][j] + U->a[i-1][j-1]) * (V->a[i][j] - V->a[i-1][j]))
+    //                         + 1.0/(4*deltay) * (V->a[i][j+1]*V->a[i][j+1] - V->a[i][j-1]*V->a[i][j-1]);
+         }
     }
     return 0;
 
@@ -298,20 +322,26 @@ int initialPressure(){
 
 int main(int argc, char *argv[]){
 
+    double L = 1.0;
+    double H = 1.5*L;
 
-    int n = 4; 
-    int m = 4;//(int) 1.5*n; 
-    double deltax = 0.1; //to specify 
-    double deltay = 0.1; //to specify 
-    double SimTime = 15.0; //to specify
+    int n = 50 ; 
+    int m = (int) (1.5*n);
+   
+    double deltax = L/n; //to specify 
+    double deltay = H/m; //to specify 
+
+    // printf("deltax = %.6e \t; deltay = %.6e \n", deltax, deltay);
+    // printf("n = %d \t; m = %d \n", n, m);
+
+    double SimTime = 1e-1; //to specify
     double t = 0.0;
-    double dt= 1.0; //to specify
+    double dt= 2e-3; //to specify
     double Pr = 4.0;
     double Gr = 10e10;
     int iter = 0;
         
     /*WRITE YOUR PROJECT ...*/
-    char *resultName = "output";
     matrix *V = callocate_matrix(m+1, n+2);
     matrix *U = callocate_matrix(m+2, n+1); 
     matrix *LapU = callocate_matrix(m+2, n+1);
@@ -333,7 +363,10 @@ int main(int argc, char *argv[]){
     Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
     double inv_delta_tx = deltax/dt;
 
-    FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
+    MatrixWriteFile("U", iter, U, t);
+    MatrixWriteFile("V", iter, V, t);
+    MatrixWriteFile("P", iter, P, t);
+    MatrixWriteFile("T", iter, T, t);
 
     PetscInitialize(&argc, &argv, 0, 0);    
     while (t<SimTime){
@@ -342,7 +375,10 @@ int main(int argc, char *argv[]){
         copy_matrix(Hyold, Hy);
         copy_matrix(Htold, Ht);
     
+<<<<<<< HEAD
         // convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
+=======
+>>>>>>> origin/Théodore
         convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
         convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
         laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
@@ -365,10 +401,17 @@ int main(int argc, char *argv[]){
             }
         }
         evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
-        FlowWriteFile(resultName, iter, U, V, P, T, n, m,t);
+
+        MatrixWriteFile("U", iter, U, t);
+        MatrixWriteFile("V", iter, V, t);
+        MatrixWriteFile("P", iter, P, t);
+        MatrixWriteFile("T", iter, T, t);
+
+
+        
 
         //print_matrix(U);
-        printf("Zizi Hihihi \n");
+        //printf("Zizi Hihihi \n");
         iter++;
         t += dt;
     }
