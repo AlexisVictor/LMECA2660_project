@@ -21,6 +21,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
             One point from Phi must then be set to an abritrary constant.*/
         }
     }
+    rhs[(n/2)*m+m/2] = 1.0/50.0; //inv_delta_tx*(U->a[i+1][j+1] - U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
 
 }
 
@@ -133,6 +134,13 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
         One point from Phi must then be set to an abritrary constant.*/
         }
     }
+    MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2 , 1.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2+1 , 0.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2,  (n/2)*m+m/2+m, 0.0, INSERT_VALUES);
+    // MatSetValue(A, 0, 0 , 1.0/50.0, INSERT_VALUES);
+    // MatSetValue(A, 0, 1 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, 0,  m, 0.0, INSERT_VALUES);
+
 }
 
 /*To call during the initialization of your solver, before the begin of the time loop*/

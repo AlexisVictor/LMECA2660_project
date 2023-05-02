@@ -71,6 +71,7 @@ int write_matrix_to_file(matrix *mat, char const *fileName, int nb_equation){
     fclose(file);
     return 0;
 }
+
 int print_matrix(matrix *mat){
     for (int i = 0; i <mat->n;i++){
         for (int j=0; j < mat->m;j++){
@@ -144,57 +145,24 @@ int convective_velocity_div(matrix *V, matrix *U, matrix *H_x, matrix *H_y, doub
 
 }
 
-int convective_velocity_div(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double deltax, double deltay, int m, int n){
-    int i,j;
-    //calcul of the convective term away from the side of the domain 
-    for (j = 0; j<m+1; j++){
-        V->a[0][j] = -1.0/5 *(V->a[3][j] - 5*V->a[2][j] + 15*V->a[1][j]);
-        V->a[n+1][j] = -1.0/5 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
-    }
-    for (i = 0; i<n+1; i++){
-        U->a[i][0] = -1.0/5 *(U->a[i][3] - 5*U->a[i][3] + 15*U->a[i][1]);
-        U->a[i][m+1] = U->a[i][m];//-1/5 *(U->a[m+1-3][i] - 5*U->a[m+1-2][i] + 15*U->a[m+1-1][i])
-    }
-    for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){                                 
-            // H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - 2*U->a[i+1][j]*U->a[i][j] - U->a[i-1][j]*U->a[i-1][j] - 2*U->a[i][j]*U->a[i-1][j])  
-            //             + 1.0/(4*deltay) * (U->a[i][j+1]*V->a[i+1][j]) + U->a[i][j+1]*V->a[i][j-1] - U->a[i][j-1]*V->a[i+1][j-1] - U->a[i][j-1]*V->a[i][j-1];
-            H_x->a[i][j] =  1.0/(4.0*deltax) * ((U->a[i+1][j] + U->a[i][j]) * (U->a[i+1][j] + U->a[i][j]) - (U->a[i][j] + U->a[i-1][j]) * (U->a[i][j] + U->a[i-1][j]))
-                          + 1.0/(4.0*deltay) * ((U->a[i][j+1] + U->a[i][j]) * (V->a[i+1][j] + V->a[i-1][j]) - (U->a[i][j] + U->a[i][j-1]) * (V->a[i+1][j-1] + V->a[i][j-1]));
 
-        }
-    }
-    for (i = 1; i < n+1; i++){
-         for (j = 1; j< m; j++){ // decalle les indice des U de 1 vers le le haute
-            H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i][j+1] + U->a[i][j]) * (V->a[i+1][j] + V->a[i][j]) - (U->a[i-1][j+1] + U->a[i-1][j]) * (V->a[i][j] + V->a[i-1][j]))
-                         + 1.0/(4.0*deltay) * ((V->a[i][j+1] + V->a[i][j]) * (V->a[i][j+1] + V->a[i][j]) - (V->a[i][j] + V->a[i][j-1]) * (V->a[i][j] + V->a[i][j-1]));
-    //         H_y->a[i][j] = 1.0/(4.0*deltax) * ((U->a[i][j] + U->a[i][j-1]) * (V->a[i+1][j] - V->a[i][j]) 
-    //                                          + (U->a[i-1][j] + U->a[i-1][j-1]) * (V->a[i][j] - V->a[i-1][j]))
-    //                         + 1.0/(4*deltay) * (V->a[i][j+1]*V->a[i][j+1] - V->a[i][j-1]*V->a[i][j-1]);
-         }
-    }
-    return 0;
-
-}
-
-
-int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double deltax, double deltay){
-    for (int i=0; i<P->n-1; i++){
-        for (int j=0;j<P->m; j++ ){
-            grad_Px->a[i][j] = 1.0/deltax*(P->a[i+1][j] - P->a[i][j]); 
+int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double deltax, double deltay, int m, int n){
+    for (int i=1; i<n; i++){
+        for (int j=1;j<P->m+1; j++ ){
+            grad_Px->a[i][j] = 1.0/deltax*(P->a[i][j-1] - P->a[i-1][j-1]); 
         }
     }
     // for (int j=0;j<P->m; j++ ){
     //         grad_Px->a[n][j] = 1/deltax ( - P->a[n][j]) 
     //     }
-    for (int i=0; i<P->n; i++){
-        for (int j=0;j<P->m-1; j++ ){
-            grad_Py->a[i][j] = 1.0/deltay*(P->a[i][j+1] - P->a[i][j]); 
+    for (int i=1; i<P->n+1; i++){
+        for (int j=1;j<P->m; j++ ){
+            grad_Py->a[i][j] = 1.0/deltay*(P->a[i-1][j] - P->a[i-1][j-1]); 
         }
         // grad_Px->a[i][m] = 1/deltax (pressbords - P->a[i][m])
     }
     return 0; 
-}
+} // checked 
 
 int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, matrix *V, double deltax, double deltay, int m, int n){
     for (int i=1; i<n; i++){
@@ -210,28 +178,28 @@ int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, matrix *V, double 
             } 
         }
     return 0;
-}
+} // vite fait checked
 
 int laplacian_temperature(matrix *LapT, matrix *T, double deltax, double deltay, int m, int n){
-    for (int i=1; i<n; i++){
-        for (int j=1;j<m; j++){
+    for (int i=1; i<n+1; i++){
+        for (int j=1;j<m+1; j++){
             LapT->a[i][j] = 1/(deltax*deltax)*((T->a[i+1][j] - 2*T->a[i][j] + T->a[i-1][j])) 
                       + 1/(deltay*deltay)*(T->a[i][j+1] - 2*T->a[i][j] + T->a[i][j-1]);
         }
     }
     return 0;
-}
+} // checked vite fait
 
 int convective_temperature(matrix *Ht, matrix *T, matrix *U, matrix *V, double deltax, double deltay, int m, int n){
     for (int i=1; i<n+1; i++){
         for (int j=1;j<m+1; j++){
-            Ht->a[i][j] = (1.0/2.0*deltax)*(U->a[i-1][j]*(T->a[i][j]-T->a[i-1][j])) + (U->a[i][j]*(T->a[i+1][j]-T->a[i][j])) 
-                        + (1.0/2.0*deltay)*(V->a[i][j-1]*(T->a[i][j]-T->a[i][j-1])) + (V->a[i][j]*(T->a[i][j+1]-T->a[i][j]));
+            Ht->a[i][j] = (1.0/2.0*deltax) * (U->a[i-1][j] * (T->a[i][j]-T->a[i-1][j])) + (U->a[i][j]*(T->a[i+1][j]-T->a[i][j])) 
+                        + (1.0/2.0*deltay) * (V->a[i][j-1] *(T->a[i][j]-T->a[i][j-1])) + (V->a[i][j]*(T->a[i][j+1]-T->a[i][j]));
            
         }
     }
     return 0;
-}
+} // Checked, on des kog 
 
 
 
@@ -241,37 +209,37 @@ int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU
     double temp; 
     int i,j;
     for (i = 1; i < n; i++){
-        for (j = 1; j< m; j++ ){
+        for (j = 1; j< m+1; j++ ){
             temp = -1.0/2.0*(3.0*Hx->a[i][j] - Hxold->a[i][j]) - grad_Px->a[i][j] + pow(Gr,-1.0/2.0)*LapU->a[i][j];
             Uestim->a[i][j] = temp*dt + U->a[i][j];
         }
     }
-    for (i = 1; i < n; i++){
+    for (i = 1; i < n+1; i++){
         for (j = 1; j< m; j++){
-            temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] - T->a[i][j];
+            temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] - (T->a[i][j]+T->a[i][j+1])/2.0;
             Vestim->a[i][j] = temp*dt + V->a[i][j];
         }
     }
     return 0;
-}   
+}   //probleme au niveau de T (faire la moyenne pour avoir T au point souhaité)
 
 int evalVelocity(matrix *phi, double dt, double deltax, double deltay, matrix *U, matrix *V, int m, int n, matrix *Uestim, matrix *Vestim){
     int i,j;
     double temp;
     for (i = 1; i < n; i++){
-        for (j = 1; j< m; j++ ){
-            temp = (phi->a[i][j]-phi->a[i][j-1])/deltax;
+        for (j = 1; j< m+1; j++ ){
+            temp = (phi->a[i][j-1]-phi->a[i-1][j-1])/deltax;
             U->a[i][j] = temp*dt + Uestim->a[i][j];
         }
     }
-    for (i = 1; i < n; i++){
+    for (i = 1; i < n+1; i++){
         for (j = 1; j< m; j++){
-            temp = (phi->a[i][j]-phi->a[i-1][j])/deltay;
+            temp = (phi->a[i-1][j]-phi->a[i-1][j-1])/deltay;
             V->a[i][j] = temp*dt + Vestim->a[i][j];
         }
     }
     return 0;
-}
+}  //checked 
 
 int evalTemperature(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, double deltax, double deltay, int m, int n, double Pr, double dt, double Gr){   
     double temp;
@@ -301,7 +269,7 @@ int evalTemperature(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, double d
         T->a[i][0] = -1.0/5 * (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
     }
     return 0;
-}
+} //potentiel erreur au niveau des conditions limites mais a priori ok 
 
 /*
 int initialPressure(){
@@ -342,24 +310,24 @@ int main(int argc, char *argv[]){
     int iter = 0;
         
     /*WRITE YOUR PROJECT ...*/
-    matrix *V = callocate_matrix(m+1, n+2);
     matrix *U = callocate_matrix(m+2, n+1); 
+    matrix *V = callocate_matrix(m+1, n+2);
     matrix *LapU = callocate_matrix(m+2, n+1);
     matrix *LapV = callocate_matrix(m+1, n+2);
-    matrix *LapT = callocate_matrix(m+2, n+2);
     matrix *Vestim = callocate_matrix(m+1, n+2);
     matrix *Uestim = callocate_matrix(m+2, n+1);
+    matrix *grad_Px = callocate_matrix(m+2, n+1);
+    matrix *grad_Py = callocate_matrix(m+1, n+2);
+    matrix *Hx = callocate_matrix(m+2, n+1); 
+    matrix *Hxold = callocate_matrix(m+2, n+1);
+    matrix *Hyold = callocate_matrix(m+1, n+2);
+    matrix *Hy = callocate_matrix(m+1, n+2);
     matrix *P = callocate_matrix(m, n); 
     matrix *T = callocate_matrix(m+2, n+2); 
-    matrix *phi = callocate_matrix(m, n); 
-    matrix *Hy = callocate_matrix(m+1, n+2);
-    matrix *Hx = callocate_matrix(m+2, n+1);
+    matrix *LapT = callocate_matrix(m+2, n+2);
     matrix *Ht = callocate_matrix(m+2, n+2);
-    matrix *Hyold = callocate_matrix(m+1, n+2);
-    matrix *Hxold = callocate_matrix(m+2, n+1);
+    matrix *phi = callocate_matrix(m, n); 
     matrix *Htold = callocate_matrix(m+2, n+2);
-    matrix *grad_Px = callocate_matrix(m, n);
-    matrix *grad_Py = callocate_matrix(m, n);
     Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
     double inv_delta_tx = deltax/dt;
 
@@ -375,22 +343,19 @@ int main(int argc, char *argv[]){
         copy_matrix(Hyold, Hy);
         copy_matrix(Htold, Ht);
     
-<<<<<<< HEAD
         // convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
-=======
->>>>>>> origin/Théodore
         convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
         convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
         laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
         laplacian_temperature(LapT, T, deltax, deltay, m, n); 
-        pressure_gradure(grad_Px, grad_Py, P, deltax, deltay);
+        pressure_gradure(grad_Px, grad_Py, P, deltax, deltay, m, n);
         evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
                           T, Uestim, Vestim, m, n, dt, Gr); 
         
         
         /* Poisson */
         initialize_poisson_solver(data, m, n);
-        poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
+        poisson_solver( data, inv_delta_tx, m,  n, Uestim, Vestim, phi);
         free_poisson_solver( data); 
 
         evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
