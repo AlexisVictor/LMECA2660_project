@@ -302,7 +302,7 @@ int main(int argc, char *argv[]){
     // printf("deltax = %.6e \t; deltay = %.6e \n", deltax, deltay);
     // printf("n = %d \t; m = %d \n", n, m);
 
-    double SimTime = 1e-1; //to specify
+    double SimTime = 2e-1; //to specify
     double t = 0.0;
     double dt= 2e-3; //to specify
     double Pr = 4.0;
@@ -334,6 +334,7 @@ int main(int argc, char *argv[]){
     MatrixWriteFile("U", iter, U, t);
     MatrixWriteFile("V", iter, V, t);
     MatrixWriteFile("P", iter, P, t);
+    MatrixWriteFile("phi", iter, phi, t);
     MatrixWriteFile("T", iter, T, t);
 
     PetscInitialize(&argc, &argv, 0, 0);    
@@ -343,8 +344,8 @@ int main(int argc, char *argv[]){
         copy_matrix(Hyold, Hy);
         copy_matrix(Htold, Ht);
     
-        // convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
-        convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
+        // convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
+        convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
         convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
         laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
         laplacian_temperature(LapT, T, deltax, deltay, m, n); 
@@ -352,6 +353,7 @@ int main(int argc, char *argv[]){
         evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
                           T, Uestim, Vestim, m, n, dt, Gr); 
         
+        MatrixWriteFile("Uestim", iter, Uestim, t);
         
         /* Poisson */
         initialize_poisson_solver(data, m, n);
@@ -367,6 +369,8 @@ int main(int argc, char *argv[]){
         }
         evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
 
+        iter++;
+        t += dt;
         MatrixWriteFile("U", iter, U, t);
         MatrixWriteFile("V", iter, V, t);
         MatrixWriteFile("P", iter, P, t);
@@ -377,8 +381,7 @@ int main(int argc, char *argv[]){
 
         //print_matrix(U);
         //printf("Zizi Hihihi \n");
-        iter++;
-        t += dt;
+        
     }
 
 
