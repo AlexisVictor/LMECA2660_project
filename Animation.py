@@ -5,7 +5,7 @@ from matplotlib.animation import FuncAnimation
 # Données
 
 n = 50
-m = 1.5*n
+m = (int) (1.5*n)
 dt = 2e-3
 x = np.linspace(0, 1, n)
 y = np.linspace(0, 1.5, m)

@@ -11,7 +11,7 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
     for (int i = 0; i < n; i++){
         for (int j = 0; j< m; j++ ){
             // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
-            rhs[i*m+j] = inv_delta_tx/4*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
+            rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
             //notes pour trop tard: size of U = (m+1, n+2) and V = (m+2, n+1)
 
             /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
@@ -19,8 +19,8 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
             One point from Phi must then be set to an abritrary constant.*/
         }
     }
-    rhs[m+1] = 1;
-    //rhs[(n/2)*m+m/2] = 1;
+    // rhs[m+1] = 1;
+    rhs[(n/2)*m+m/2] = 1;
 
 
 }
@@ -54,7 +54,7 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix
     /*Solve the linear system of equations */
     KSPSolve(sles, b, x);
     KSPGetIterationNumber(sles, &its);
-    PetscPrintf(PETSC_COMM_WORLD, "Solution to Poisson eqn in %d iterations \n", its);
+    // PetscPrintf(PETSC_COMM_WORLD, "Solution to Poisson eqn in %d iterations \n", its);
 
     VecGetArray(x, &sol);
 
@@ -134,21 +134,21 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
         One point from Phi must then be set to an arbitrary constant.*/
         }
     }
-    MatSetValue(A, m+1, m+1 , 1.0, INSERT_VALUES);
-    MatSetValue(A, m+1, 1 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m+1 , 1.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, 1 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
 
 
 
 
     // MatSetValue(A, 0,  m, 0.0, INSERT_VALUES);
-    // MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2 , 1.0, INSERT_VALUES);
-    // MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2+1 , 0.0, INSERT_VALUES);
-    // MatSetValue(A, (n/2)*m+m/2,  (n/2)*m+m/2+m, 0.0, INSERT_VALUES);
-    // MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2-1 , 0.0, INSERT_VALUES);
-    // MatSetValue(A, (n/2)*m+m/2,  (n/2)*m+m/2-m, 0.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2 , 1.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2+1 , 0.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2,  (n/2)*m+m/2+m, 0.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2, (n/2)*m+m/2-1 , 0.0, INSERT_VALUES);
+    MatSetValue(A, (n/2)*m+m/2,  (n/2)*m+m/2-m, 0.0, INSERT_VALUES);
 
 
     // int r;
@@ -232,7 +232,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 /*   -Specify the number of non-zero diagonals in the sparse matrix*/
 PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
 {
-    printf("we are initializing poisson \n");
+    // printf("we are initializing poisson \n");
     PetscInt rowStart ; /*rowStart = 0*/
     PetscInt rowEnd ; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
@@ -274,7 +274,7 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
     KSPSetUseFischerGuess(data->sles,1,4);
     KSPGMRESSetPreAllocateVectors(data->sles);
 
-    PetscPrintf(PETSC_COMM_WORLD, "Assembly of Matrix and Vectors is done \n");
+    // PetscPrintf(PETSC_COMM_WORLD, "Assembly of Matrix and Vectors is done \n");
 
     return ierr;
 }

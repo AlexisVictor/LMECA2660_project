@@ -338,6 +338,7 @@ int main(int argc, char *argv[]){
     MatrixWriteFile("T", iter, T, t);
 
     PetscInitialize(&argc, &argv, 0, 0);    
+    initialize_poisson_solver(data, m, n);
     while (t<SimTime){
 
         copy_matrix(Hxold, Hx);
@@ -352,13 +353,12 @@ int main(int argc, char *argv[]){
         pressure_gradure(grad_Px, grad_Py, P, deltax, deltay, m, n);
         evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
                           T, Uestim, Vestim, m, n, dt, Gr); 
-        
+        // if (iter%20==0){
+        // MatrixWriteFile("Uestim", iter/20, Uestim, t);}
         MatrixWriteFile("Uestim", iter, Uestim, t);
-        
         /* Poisson */
-        initialize_poisson_solver(data, m, n);
         poisson_solver( data, inv_delta_tx, m,  n, Uestim, Vestim, phi);
-        free_poisson_solver( data); 
+        phi->a[0][0]=0;
 
         evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
         int i,j;
@@ -371,18 +371,21 @@ int main(int argc, char *argv[]){
 
         iter++;
         t += dt;
+        // if (iter%20==0){
+        // MatrixWriteFile("U", iter/20, U, t);
+        // MatrixWriteFile("V", iter/20, V, t);
+        // MatrixWriteFile("P", iter/20, P, t);
+        // MatrixWriteFile("T", iter/20, T, t);}
+        
         MatrixWriteFile("U", iter, U, t);
         MatrixWriteFile("V", iter, V, t);
         MatrixWriteFile("P", iter, P, t);
         MatrixWriteFile("T", iter, T, t);
-
-
-        
-
         //print_matrix(U);
         //printf("Zizi Hihihi \n");
         
     }
+    free_poisson_solver( data); 
 
 
     PetscFinalize();
