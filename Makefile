@@ -4,12 +4,12 @@ LIB_DIR := -L/home/thoussiau/Projet_2660/lib_petsc/lib -Wl,-rpath=/home/thoussia
 
 LIB := -lpetsc
 
-CXX_FLAGS := -O0 -Wall -g #-Werror 
+CXX_FLAGS := -O0 -Wall -g -Werror 
 
 #Compilation
 all :
 	gcc -o project project.c poisson.c -lm -lmpi $(CXX_FLAGS) $(LIB_DIR) $(LIB) $(INC_DIR)
-
+	./project -pc_type lu -ksp_type fgmres
 #Delete of executable files
 clean :
 	rm project
