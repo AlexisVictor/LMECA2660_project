@@ -252,20 +252,20 @@ int evalTemperature(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, double d
     }
     /*Plus sur de l'ordre des index i et j à checker absolument!!!*/
     double l0 = 1e-3 ;
-    for (int j=1;j<m; j++){
+    for (int j=1;j<m+1; j++){
         //Left Surface : 
         T->a[0][j] = T->a[1][j];
         //Right Surface : 
         T->a[n+1][j] = T->a[n][j];
         }    
     double Tgamma;
-    for (int i=1;i<n; i++){
+    for (int i=1;i<n+1; i++){
         //Free Surface : 
         Tgamma = l0/(2*deltay+l0) * T->a[i][m];
         T->a[i][m+1] = -1.0/5 * (T->a[i][m-2]-5*T->a[i][m-1]+15*T->a[i][m]-16*Tgamma);
 
         //Bottom Surface : 
-        Tgamma = 2*deltay + T->a[i][1];
+        Tgamma = -deltay/2 + T->a[i][1];
         T->a[i][0] = -1.0/5 * (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
     }
     return 0;

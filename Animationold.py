@@ -11,6 +11,7 @@ dt       = 2e-3
 SimTime  = 2e-1
 saveIter = 1 
 usemixer = 0 
+maxframe = 100
 
 m = int(1.5*n)
 L = 1
@@ -26,7 +27,7 @@ print(np.shape(X), np.shape(Y))
 
 
 def fillarray(string, i, xlength, ylength):
-    file = "results\{}-{}.txt".format(string, i)
+    file = "results/{}-{}.txt".format(string, i)
     with open(file, "r") as f: 
         content = []
         for line in f:
@@ -98,8 +99,7 @@ ax.set_ylim(0,H)
 ax.set_aspect('equal')
 
 initTvw(ax)
-maxframe = 1000
-anim = animation.FuncAnimation(f,animateTvw,interval=0.1,fargs=(maxframe,ax),frames=maxframe, blit = False)
+anim = animation.FuncAnimation(f,animateTvw,interval=10,fargs=(maxframe,ax),frames=maxframe, blit = False)
 plt.show()
 
 # f = r"Ufoirée.gif" 
