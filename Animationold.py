@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 n        = 50
-dt       = 2e-3 
-SimTime  = 2e-1
+dt       = 1/428
+SimTime  = 5e-1
 saveIter = 1 
 usemixer = 0 
 maxframe = 100
@@ -19,7 +19,7 @@ H = 1.5*L
 x = np.linspace(0,L,num=n)
 y = np.linspace(0,H,num=m)
 X, Y = np.meshgrid(x,y)
-Tcolors = np.linspace(0,1e-5,num=101)
+Tcolors = np.linspace(0,1e-4,num=101)
 # vcolors = np.linspace(0,0.05,num=101)
 # wcolors = np.linspace(-2,2,num=101)
 
@@ -38,7 +38,6 @@ def fillarray(string, i, xlength, ylength):
         ypos = int(elem[1])
         value = elem[2]
         array[xpos][ypos] = value
-    
     if xlength!=n:
         if xlength-n==2:
             array = np.delete(array, [0,n+1], 0)
@@ -76,13 +75,13 @@ def plotmixer(bool, iter,ax):
 
 def initTvw(ax):
     array = fillarray("T", 0, n+2, m+2)
-    CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
-    plt.colorbar(CS,ax=ax)
+    #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+    #plt.colorbar(CS,ax=ax)
     plotmixer(usemixer,0,ax)
         
 	
 	
-def animateTvw(iter,mf,ax):
+def animatearray(iter,mf,ax):
     array = fillarray("T", iter, n+2, m+2)
     ax.clear()
     ax.set_xlim(0,L)
@@ -99,7 +98,8 @@ ax.set_ylim(0,H)
 ax.set_aspect('equal')
 
 initTvw(ax)
-anim = animation.FuncAnimation(f,animateTvw,interval=10,fargs=(maxframe,ax),frames=maxframe, blit = False)
+maxframe = (int) (SimTime/dt)
+anim = animation.FuncAnimation(f,animatearray,interval=0.1,fargs=(maxframe,ax),frames=maxframe, blit = False)
 plt.show()
 
 # f = r"Ufoirée.gif" 
