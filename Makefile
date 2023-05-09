@@ -3,14 +3,12 @@ LIB_DIR := -L/opt/homebrew/Cellar/petsc/3.19.0/lib#/usr/local/opt/petsc/lib
 
 LIB := -lpetsc.3.19.0
 
-LIB := -lpetsc
-
-CXX_FLAGS := -O0 -Wall -g -Werror 
+CXX_FLAGS := -O0 -Wall #-Werror #-g
 
 #Compilation
 all :
-	gcc -o project project.c poisson.c -lm -lmpi $(CXX_FLAGS) $(LIB_DIR) $(LIB) $(INC_DIR)
-	./project -pc_type lu -ksp_type fgmres
+	mpicc -o project project.c poisson.c -lm -lmpi $(CXX_FLAGS) $(LIB_DIR) $(LIB) $(INC_DIR)
+
 #Delete of executable files
 clean :
 	rm projet

@@ -12,24 +12,13 @@ void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, d
         for (int j = 0; j< m; j++ ){
             // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
             rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
-<<<<<<< HEAD
-            //notes pour trop tard: size of U = (m+1, n+2) and V = (m+2, n+1)
-=======
->>>>>>> Théodore
 
             /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
             /*Do not forget that the solution for the Poisson equation is defined within a constant.
             One point from Phi must then be set to an abritrary constant.*/
         }
     }
-<<<<<<< HEAD
-    // rhs[m+1] = 1;
-    rhs[(n/2)*m+m/2] = 1;
-
-
-=======
-    rhs[m+1] = 0;
->>>>>>> Théodore
+    rhs[n/2*m+m/2] = 0.0;
 }
 
 void computeRHS2(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix *gradV)
@@ -44,7 +33,7 @@ void computeRHS2(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, 
             One point from Phi must then be set to an abritrary constant.*/
         }
     }
-    rhs[m+1] = 0;
+    rhs[m+1] = 0.0;
 }
 /*To call at each time step after computation of U_star. This function solves the poisson equation*/
 /*and copies the solution of the equation into your vector Phi*/
@@ -192,11 +181,16 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
         One point from Phi must then be set to an arbitrary constant.*/
         }
     }
-    MatSetValue(A, m+1, m+1 , 1.0, INSERT_VALUES);
-    MatSetValue(A, m+1, 1 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
-    MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m+1 , 1.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, 1 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
+    // MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
+    MatSetValue(A,n/2*m+m/2 , n/2*m+m/2, 1.0, INSERT_VALUES);
+    MatSetValue(A,n/2*m+m/2 , n/2*m+m/2 -m , 0.0, INSERT_VALUES);
+    MatSetValue(A,n/2*m+m/2 , n/2*m+m/2 +m , 0.0, INSERT_VALUES);
+    MatSetValue(A,n/2*m+m/2 , n/2*m+m/2 +1 , 0.0, INSERT_VALUES);
+    MatSetValue(A,n/2*m+m/2 , n/2*m+m/2 -1 , 0.0, INSERT_VALUES);
 }
 
 /*To call during the initialization of your solver, before the begin of the time loop*/
@@ -206,7 +200,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 /*   -Specify the number of non-zero diagonals in the sparse matrix*/
 PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
 {
-    printf("we are initializing poisson \n");
+    // printf("we are initializing poisson \n");
     PetscInt rowStart = 0; /*rowStart = 0*/
     PetscInt rowEnd = m*n; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
