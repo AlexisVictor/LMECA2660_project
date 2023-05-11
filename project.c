@@ -83,14 +83,14 @@ int print_matrix(matrix *mat){
 }
 int convective_velocity(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double deltax, double deltay, int m, int n){
     int i,j;
-    for (j = 1; j<m+1; j++){
-        V->a[0][j] = -1.0/5.0 *(V->a[3][j] - 5*V->a[2][j] + 15*V->a[1][j]);
-        V->a[n+1][j] = -1.0/5.0 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
-    }
-    for (i = 1; i<n+1; i++){
-        U->a[i][0] = -1.0/5.0 *(U->a[i][3] - 5*U->a[i][2] + 15*U->a[i][1]);
-        U->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5*U->a[i][m+1-2] + 15*U->a[i][m+1-1]);
-    }
+    // for (j = 1; j<m+1; j++){
+    //     V->a[0][j] = -1.0/5.0 *(V->a[3][j] - 5*V->a[2][j] + 15*V->a[1][j]);
+    //     V->a[n+1][j] = -1.0/5.0 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
+    // }
+    // for (i = 1; i<n+1; i++){
+    //     U->a[i][0] = -1.0/5.0 *(U->a[i][3] - 5*U->a[i][2] + 15*U->a[i][1]);
+    //     U->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5*U->a[i][m+1-2] + 15*U->a[i][m+1-1]);
+    // }
     //calcul of the convective term away from the side of the domain 
     for (i = 1; i < n; i++){
         for (j = 1; j< m+1; j++ ){ // decalle les indices des V de 1 vers la droite 
@@ -147,7 +147,7 @@ int convective_velocity_div(matrix *V, matrix *U, matrix *H_x, matrix *H_y, doub
 
 int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double deltax, double deltay, int m, int n){
     for (int i=1; i<n; i++){
-        for (int j=1;j<P->m+1; j++ ){
+        for (int j=1;j<m+1; j++ ){
             grad_Px->a[i][j] = 1.0/deltax*(P->a[i][j-1] - P->a[i-1][j-1]); 
         }
     }
@@ -155,7 +155,7 @@ int pressure_gradure(matrix *grad_Px, matrix *grad_Py, matrix *P, double deltax,
     //         grad_Px->a[n][j] = 1/deltax ( - P->a[n][j]) 
     //     }
     for (int i=1; i<P->n+1; i++){
-        for (int j=1;j<P->m; j++ ){
+        for (int j=1;j<m; j++ ){
             grad_Py->a[i][j] = 1.0/deltay*(P->a[i-1][j] - P->a[i-1][j-1]); 
         }
         // grad_Px->a[i][m] = 1/deltax (pressbords - P->a[i][m])
@@ -202,34 +202,60 @@ int convective_temperature(matrix *Ht, matrix *T, matrix *U, matrix *V, double d
 
 
 
+// int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU, matrix *LapV,
+//                       matrix *Hyold, matrix *Hxold, matrix *grad_Px, matrix *grad_Py, matrix *T, matrix *Uestim, 
+//                       matrix *Vestim, int m, int n, double dt, double Gr){
+//     double temp; 
+//     int i,j;
+    
+//     for (i = 1; i < n; i++){
+//         for (j = 1; j< m+1; j++ ){
+//             temp = -1.0/2.0*(3.0*Hx->a[i][j] - Hxold->a[i][j]) - grad_Px->a[i][j] + pow(Gr,-1.0/2.0)*LapU->a[i][j];
+//             Uestim->a[i][j] = temp*dt + U->a[i][j];
+//         }
+//     }
+//     for (i = 1; i < n+1; i++){
+//         for (j = 1; j< m; j++){
+//             temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] + (T->a[i][j]+T->a[i][j+1])/2.0;
+//             Vestim->a[i][j] = temp*dt + V->a[i][j];
+//             // Vestim->a[i][j] = V->a[i][j] + dt*(T->a[i][j]+T->a[i][j+1])/2.0;
+//         }
+//     }
+    
+//     return 0;
+// }   // c'est ici qu'on suspecte la merde d'etre 
+
 int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU, matrix *LapV,
                       matrix *Hyold, matrix *Hxold, matrix *grad_Px, matrix *grad_Py, matrix *T, matrix *Uestim, 
                       matrix *Vestim, int m, int n, double dt, double Gr){
     double temp; 
     int i,j;
-    
-    for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){
+
+    for (j = 1; j< m+1; j++ ){
+        for (i = 1; i < n; i++){
             temp = -1.0/2.0*(3.0*Hx->a[i][j] - Hxold->a[i][j]) - grad_Px->a[i][j] + pow(Gr,-1.0/2.0)*LapU->a[i][j];
             Uestim->a[i][j] = temp*dt + U->a[i][j];
         }
+        Vestim->a[0][j] = -1.0/5.0 *(Vestim->a[3][j] - 5.0*Vestim->a[2][j] + 15.0*Vestim->a[1][j]);
+        Vestim->a[n+1][j] = -1.0/5.0 *(Vestim->a[n+1-3][j] - 5.0*Vestim->a[n+1-2][j] + 15.0*Vestim->a[n+1-1][j]);
     }
     for (i = 1; i < n+1; i++){
         for (j = 1; j< m; j++){
             temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] + (T->a[i][j]+T->a[i][j+1])/2.0;
             Vestim->a[i][j] = temp*dt + V->a[i][j];
-            // Vestim->a[i][j] = V->a[i][j] + dt*(T->a[i][j]+T->a[i][j+1])/2.0;
         }
+        Uestim->a[i][0] = -1.0/5 *(Uestim->a[i][3] - 5.0*Uestim->a[i][2] + 15.0*Uestim->a[i][1]);
+        Uestim->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5*U->a[i][m+1-2] + 15*U->a[i][m+1-1]);
     }
-    
+
     return 0;
-}   // c'est ici qu'on suspecte la merde d'etre 
+}   //probleme au niveau de T (faire la moyenne pour avoir T au point souhaité)
 
 int evalVelocity(matrix *phi, double dt, double deltax, double deltay, matrix *U, matrix *V, int m, int n, matrix *Uestim, matrix *Vestim){
     int i,j;
     double temp;
     for (i = 1; i < n; i++){
-        for (j = 1; j< m+1; j++ ){
+        for (j = 1; j < m+1; j++ ){
             temp = -(phi->a[i][j-1]-phi->a[i-1][j-1])/deltax;
             U->a[i][j] = temp*dt + Uestim->a[i][j];
         }
@@ -240,14 +266,14 @@ int evalVelocity(matrix *phi, double dt, double deltax, double deltay, matrix *U
             V->a[i][j] = temp*dt + Vestim->a[i][j];
         }
     }
-    for (j = 1; j<m+1; j++){
-        V->a[0][j] = -1.0/5.0 *(V->a[3][j] - 5.0*V->a[2][j] + 15.0*V->a[1][j]);
-        V->a[n+1][j] = -1.0/5.0 *(V->a[n+1-3][j] - 5.0*V->a[n+1-2][j] + 15.0*V->a[n+1-1][j]);
-    }
-    for (i = 1; i<n+1; i++){
-        U->a[i][0] = -1.0/5.0 *(U->a[i][3] - 5.0*U->a[i][2] + 15.0*U->a[i][1]);
-        U->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5.0*U->a[i][m+1-2] + 15.0*U->a[i][m+1-1]);// U->a[i][m];
-    }
+    // for (j = 1; j<m+1; j++){
+    //     V->a[0][j] = -1.0/5.0 *(V->a[3][j] - 5.0*V->a[2][j] + 15.0*V->a[1][j]);
+    //     V->a[n+1][j] = -1.0/5.0 *(V->a[n+1-3][j] - 5.0*V->a[n+1-2][j] + 15.0*V->a[n+1-1][j]);
+    // }
+    // for (i = 1; i<n+1; i++){
+    //     U->a[i][0] = -1.0/5.0 *(U->a[i][3] - 5.0*U->a[i][2] + 15.0*U->a[i][1]);
+    //     U->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5.0*U->a[i][m+1-2] + 15.0*U->a[i][m+1-1]);// U->a[i][m];
+    // }
     return 0;
 }  //checked 
 
@@ -297,7 +323,7 @@ int evalVelocity_norm( matrix* U, matrix* V, matrix* NormVelocity, int m, int n)
 int eval_vorticity(matrix* U, matrix* V, matrix* Vorticity, double deltax, double deltay, int m, int n){
     for (int i=0; i<n+1; i++){
         for(int j=0; j<m+1; j++){
-            Vorticity->a[i][j] = (V->a[i+1][j] - V->a[i][j])/deltax + (U->a[i][j+1] - U->a[i][j]);
+            Vorticity->a[i][j] = (V->a[i+1][j] - V->a[i][j])/deltax + (U->a[i][j+1] - U->a[i][j])/deltay;
         }
     }   
 }
@@ -312,25 +338,10 @@ int initialPressure(){
     return 0;
 }
 
-
-
-
-
 */
-int grandcoupdepieddansleculdeV( matrix* U, matrix *V, int m, int n){
-    int i,j; 
-    for (i=1; i<n; i++){
-        for (j = 1; j< m+1; j++ ){
-            U->a[i][j] = 1e-8;
-        }
-    }
-    for (i = 1; i < n+1; i++){
-        for (j = 1; j< m; j++){
-            V->a[i][j] = 1e-5;
-        }
-    }
-    return 0; 
-}
+
+
+
 
 int main(int argc, char *argv[]){
     int a=0;
@@ -340,18 +351,20 @@ int main(int argc, char *argv[]){
         double H = 1.0;//1.5*L;
         double L = H/1.5;
 
-        int n = 50 ; 
+        int n = 60 ; 
+        // int n = 50;
         int m = (int) (1.5*n);
     
         double deltax = L/n; //to specify 
         double deltay = H/m; //to specify 
 
-        // printf("deltax = %.6e \t; deltay = %.6e \n", deltax, deltay);
+        // sprintf("deltax = %.6e \t; deltay = %.6e \n", deltax, deltay);
         // printf("n = %d \t; m = %d \n", n, m);
 
         double SimTime = 10000; //to specify
         double t = 0.0;
-        double dt= 1.0/75.0; //to specify
+        // double dt = 1.0/300.0;
+        double dt= 1.0/(60.0*1.5);//1.0/75.0; //to specify
         double Pr = 4.0;
         double Gr = 1e10;
         int iter = 0;
@@ -381,6 +394,7 @@ int main(int argc, char *argv[]){
         double inv_delta_tx = deltax/dt;
 
         MatrixWriteFile("U", iter, U, t);
+        MatrixWriteFile("V", iter, V, t);
         MatrixWriteFile("Vestim", iter, Vestim, t);
         MatrixWriteFile("P", iter, P, t);
         MatrixWriteFile("phi", iter, phi, t);
@@ -399,8 +413,9 @@ int main(int argc, char *argv[]){
     }
         MatrixWriteFile("T", iter, T, t);
 
-        grandcoupdepieddansleculdeV( U, V, m, n);
+
         PetscInitialize(&argc, &argv, 0, 0);    
+
         while (t<SimTime){
 
             copy_matrix(Hxold, Hx);
@@ -413,23 +428,20 @@ int main(int argc, char *argv[]){
             laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
             laplacian_temperature(LapT, T, deltax, deltay, m, n); 
             pressure_gradure(grad_Px, grad_Py, P, deltax, deltay, m, n);
-
-
             evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
                             T, Uestim, Vestim, m, n, dt, Gr); 
             
             
             /* Poisson */
-            initialize_poisson_solver(data, m, n);
-            poisson_solver( data,  inv_delta_tx, m,  n, Uestim, Vestim, phi);
+            initialize_poisson_solver(data, m, n, deltax);
+            poisson_solver(data,  deltax, dt, m,  n, Uestim, Vestim, phi);
             free_poisson_solver( data); 
-            if (iter%8000==0){
-                MatrixWriteFile("phi", iter/8000, phi, t);
+            
+            if (iter%800==0){
+                MatrixWriteFile("phi", iter/800, phi, t);
             }
             // MatrixWriteFile("phi", iter, phi, t);
-
             evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
-
             int i,j;
             for (i = 0; i < n; i++){
                 for (j = 0; j< m; j++){
@@ -441,24 +453,29 @@ int main(int argc, char *argv[]){
             eval_vorticity(U, V, Vorticity, deltax, deltay, m, n);
             iter++;
             t += dt;
-            if (iter%8000==0){
-                MatrixWriteFile("U", iter/8000, V, t);
-                MatrixWriteFile("P", iter/8000, P, t);
-                MatrixWriteFile("T", iter/8000, T, t);
-                MatrixWriteFile("Vestim", iter/8000, Vestim, t);
-                MatrixWriteFile("Velocity", iter/8000, NormVelocity, t);
-                MatrixWriteFile("Gradpy", iter/8000, grad_Py, t);
-                MatrixWriteFile("LapV", iter/8000, LapV, t);
-                MatrixWriteFile("Hy", iter/8000, Hy, t);
+            if (iter%800==0){
+                MatrixWriteFile("U", iter/800, V, t);
+                MatrixWriteFile("P", iter/800, P, t);
+                MatrixWriteFile("T", iter/800, T, t);
+                MatrixWriteFile("V", iter/800, V, t);
+                MatrixWriteFile("Vestim", iter/800, Vestim, t);
+                MatrixWriteFile("Velocity", iter/800, NormVelocity, t);
+                MatrixWriteFile("Gradpy", iter/800, grad_Py, t);
+                MatrixWriteFile("LapV", iter/800, LapV, t);
+                MatrixWriteFile("Hy", iter/800, Hy, t);
 
 
             }
-            // MatrixWriteFile("U", iter, U, t);
-            // MatrixWriteFile("Vestim", iter, Vestim, t);
+            // MatrixWriteFile("U", iter, V, t);
             // MatrixWriteFile("P", iter, P, t);
             // MatrixWriteFile("T", iter, T, t);
+            // MatrixWriteFile("V", iter, V, t);
+            // MatrixWriteFile("Vestim", iter, Vestim, t);
+            // MatrixWriteFile("Velocity", iter, NormVelocity, t);
+            // MatrixWriteFile("Gradpy", iter, grad_Py, t);
+            // MatrixWriteFile("LapV", iter, LapV, t);
+            // MatrixWriteFile("Hy", iter, Hy, t);
         }
-
 
         PetscFinalize();
         free_matrix(V);
@@ -487,7 +504,7 @@ int main(int argc, char *argv[]){
         matrix *U = callocate_matrix(m+2, n+1);
         matrix *Uold = callocate_matrix(m+2, n+1);
         matrix *V = callocate_matrix(m+1, n+2); 
-        matrix *Hx = callocate_matrix(m+2, n+1); 
+        // matrix *Hx = callocate_matrix(m+2, n+1); 
         // matrix *Hxold = callocate_matrix(m+2, n+1);
         // matrix *Hyold = callocate_matrix(m+1, n+2);
         matrix *Hy = callocate_matrix(m+1, n+2);

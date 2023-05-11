@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-n        = 50
+n        = 60
 dt       = 1/428
 SimTime  = 5e1
 saveIter = 1 
@@ -17,7 +17,7 @@ H = 1.5*L
 x = np.linspace(0,L,num=n)
 y = np.linspace(0,H,num=m)
 X, Y = np.meshgrid(x,y)
-Tcolors = np.linspace(0,1e-11,num=500)
+Tcolors = np.linspace(0,5e-23,num=100)
 # vcolors = np.linspace(0,0.05,num=101)
 # wcolors = np.linspace(-2,2,num=101)
 
@@ -52,7 +52,7 @@ def fillarray(string, i, xlength, ylength):
     
     return array 
 
-
+cmap1 = plt.get_cmap("coolwarm")
 cmap = plt.cm.get_cmap("jet").copy()
 N = cmap.N
 cmap.set_under(cmap(1))
@@ -72,22 +72,40 @@ def plotmixer(bool, iter,ax):
 
 
 def initTvw(ax):
-    array = fillarray("Velocity", 1, n, m)
+    array = fillarray("Velocity",1, n, m)
     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
     #plt.colorbar(CS,ax=ax)
     plotmixer(usemixer,0,ax)
         
 	
 	
-def animatearray(iter,mf,ax):
+def animatearray(iter,mf,ax,c):
     array = fillarray("Velocity", iter, n, m)
     ax.clear()
     ax.set_xlim(0,L)
     ax.set_ylim(0,H)
-    ax.set_title("iter = {}".format(iter+1))
-    ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+    ax.set_title("iter = {}".format(iter))
+    ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
     plotmixer(usemixer,iter,ax)
     return ax
+
+# def initTvw(ax):
+#     array = fillarray("T",1, n+2, m+2)
+#     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+#     #plt.colorbar(CS,ax=ax)
+#     plotmixer(usemixer,0,ax)
+        
+	
+	
+# def animatearray(iter,mf,ax,c):
+#     array = fillarray("T", iter, n+2, m+2)
+#     ax.clear()
+#     ax.set_xlim(0,L)
+#     ax.set_ylim(0,H)
+#     ax.set_title("iter = {}".format(iter))
+#     ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
+#     plotmixer(usemixer,iter,ax)
+#     return ax
     
 
 f, ax = plt.subplots(1,1)
@@ -96,8 +114,8 @@ ax.set_ylim(0,H)
 ax.set_aspect('equal')
 
 initTvw(ax)
-maxframe = 18 #(int) (SimTime/dt)
-anim = animation.FuncAnimation(f,animatearray,interval=100,fargs=(maxframe,ax),frames=maxframe, blit = False)
+maxframe = 460#(int) (SimTime/dt)
+anim = animation.FuncAnimation(f,animatearray,interval=100,fargs=(maxframe,ax,cmap1),frames=maxframe, blit = False)
 plt.show()
 
 # f = r"Ufoirée.gif" 
