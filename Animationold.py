@@ -6,18 +6,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-n        = 60
-dt       = 1/428
-SimTime  = 5e1
+m = 60
+n  = int(2/3*m)
+dt       = 1/300
+SimTime  = 1e4
 saveIter = 1 
 usemixer = 0 
-m = int(1.5*n)
-L = 1
-H = 1.5*L
+
+H = 1
+L = 2/3*H
 x = np.linspace(0,L,num=n)
 y = np.linspace(0,H,num=m)
 X, Y = np.meshgrid(x,y)
-Tcolors = np.linspace(0,5e-23,num=100)
+Tcolors = np.linspace(0,1e-10,num=100)
 # vcolors = np.linspace(0,0.05,num=101)
 # wcolors = np.linspace(-2,2,num=101)
 
@@ -72,7 +73,7 @@ def plotmixer(bool, iter,ax):
 
 
 def initTvw(ax):
-    array = fillarray("Velocity",1, n, m)
+    array = fillarray("Velocity",0, n, m)
     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
     #plt.colorbar(CS,ax=ax)
     plotmixer(usemixer,0,ax)
@@ -115,7 +116,7 @@ ax.set_aspect('equal')
 
 initTvw(ax)
 maxframe = 460#(int) (SimTime/dt)
-anim = animation.FuncAnimation(f,animatearray,interval=100,fargs=(maxframe,ax,cmap1),frames=maxframe, blit = False)
+anim = animation.FuncAnimation(f,animatearray,interval=10,fargs=(maxframe,ax,cmap1),frames=maxframe, blit = False)
 plt.show()
 
 # f = r"Ufoirée.gif" 

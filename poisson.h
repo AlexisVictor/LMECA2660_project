@@ -24,10 +24,16 @@ typedef struct {
 
 matrix* callocate_matrix(int m, int n);
 
-PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n, double deltax);
-void poisson_solver(Poisson_data *data, double deltax, double dt,int m, int n, matrix *Uestim, matrix *Vestim, matrix *phi);
-void free_poisson_solver(Poisson_data* data);
-void test_poisson(Poisson_data *data,double deltax, double dt, int m, int n, matrix *U , matrix *V, matrix *phi);
+// PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n, double deltax);
+// void poisson_solver(Poisson_data *data, double deltax, double dt,int m, int n, matrix *Uestim, matrix *Vestim, matrix *phi);
 
+PetscErrorCode initialize_poisson_solver_otis(Poisson_data* data, int Nx, int Ny, double h);
+void poisson_solver_otis(Poisson_data *data, int nx, int ny, double **u_star, double **v_star, double dt, double *phi);
+void poisson_solver2(Poisson_data *data, double deltax, double dt, int m, int n, matrix *Uestim, matrix *Vestim, matrix *phi);
+void free_poisson_solver_otis(Poisson_data* data);
+// void free_poisson_solver(Poisson_data* data);
+// void test_poisson(Poisson_data *data,double deltax, double dt, int m, int n, matrix *U , matrix *V, matrix *phi);
+
+int PHI_IND(int i, int j, int Ny);
 #endif
 
