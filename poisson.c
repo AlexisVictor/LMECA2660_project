@@ -1,4 +1,5 @@
 #include "poisson.h"
+
 // #include <mpi.h>
 
 /*Called by poisson_solver at each time step*/
@@ -7,9 +8,11 @@
 /*    -Impose zero mass flow here by changing value of U_star*/
 /*    -Fill vector rhs*/
 void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix *U, matrix *V)
-{
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j< m; j++ ){
+{   
+    int i; int j;
+
+    for ( i = 0; i < n; i++){
+        for ( j = 0; j< m; j++ ){
             // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
             rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
 
@@ -186,6 +189,8 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
     MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
     MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
     MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
+    
+    MatView(A,PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /*To call during the initialization of your solver, before the begin of the time loop*/
@@ -195,7 +200,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 /*   -Specify the number of non-zero diagonals in the sparse matrix*/
 PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
 {
-    printf("we are initializing poisson \n");
+    //printf("we are initializing poisson \n");
     PetscInt rowStart = 0; /*rowStart = 0*/
     PetscInt rowEnd = m*n; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
@@ -237,7 +242,7 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
     KSPSetUseFischerGuess(data->sles,1,4);
     KSPGMRESSetPreAllocateVectors(data->sles);
 
-    PetscPrintf(PETSC_COMM_WORLD, "Assembly of Matrix and Vectors is done \n");
+    //PetscPrintf(PETSC_COMM_WORLD, "Assembly of Matrix and Vectors is done \n");
 
     return ierr;
 }

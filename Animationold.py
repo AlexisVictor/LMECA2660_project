@@ -6,23 +6,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-n        = 50
-dt       = 1/428
-SimTime  = 5e-1
-saveIter = 1 
-usemixer = 0 
+m        = 75
+dt       = 1/300
+SimTime  = 300
+usemixer = 1
 
-m = int(1.5*n)
-L = 1
-H = 1.5*L
-x = np.linspace(0,L,num=n)
-y = np.linspace(0,H,num=m)
+n = int(2/3*m)
+H = 1
+L = H/(1.5)
+x = np.linspace(0,L,n)
+y = np.linspace(0,H,m)
 X, Y = np.meshgrid(x,y)
-Tcolors = np.linspace(0,1e-4,num=101)
-# vcolors = np.linspace(0,0.05,num=101)
-# wcolors = np.linspace(-2,2,num=101)
+order = 5e-3
+encod = 300
+colors = np.linspace(0,order,num=101)
 
-print(np.shape(X), np.shape(Y))
+
 
 
 def fillarray(string, i, xlength, ylength):
@@ -54,7 +53,7 @@ def fillarray(string, i, xlength, ylength):
     return array 
 
 
-cmap = plt.cm.get_cmap("jet").copy()
+cmap = plt.cm.get_cmap("hot").copy()
 N = cmap.N
 cmap.set_under(cmap(1))
 cmap.set_over(cmap(N-1))
@@ -63,30 +62,32 @@ def plotmixer(bool, iter,ax):
     if (bool == 1):
         theta = np.linspace(0,2*np.pi,1000)
         omega = 0.1
-        r = 0.2*np.cos(3*(theta + iter*saveIter*omega/dt))
-        x = r*np.cos(theta) + 0.5
-        y = r*np.sin(theta) + + 0.5
-        ax.fill_between(x,0,y,facecolor='black')
-        x = 0.04*np.cos(theta) + 0.5
-        y = 0.04*np.sin(theta) + 0.5
-        ax.fill_between(x,0,y,facecolor='black')
+        r = 0.2*np.cos(3*(theta + iter*encod*omega*dt))
+        x = r*np.cos(theta) + L/2
+        y = r*np.sin(theta) + L/2
+        ax.fill_between(x,0,y,facecolor='white')
+        x = 0.04*np.cos(theta) + L/2
+        y = 0.04*np.sin(theta) + L/2
+        ax.fill_between(x,0,y,facecolor='white')
 
 
 def initTvw(ax):
     array = fillarray("T", 0, n+2, m+2)
-    #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
-    #plt.colorbar(CS,ax=ax)
+    array = np.abs(array)
+    CS = ax.contourf(X,Y,array,colors,cmap=cmap,extend="both")
+    plt.colorbar(CS,ax=ax)
     plotmixer(usemixer,0,ax)
         
 	
 	
 def animatearray(iter,mf,ax):
     array = fillarray("T", iter, n+2, m+2)
+    array = np.abs(array)
     ax.clear()
     ax.set_xlim(0,L)
     ax.set_ylim(0,H)
-    ax.set_title("iter = {}".format(iter))
-    ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+    ax.set_title(r"$\frac{{{}U}}{{H}}$ = {}".format('t', np.round(iter * dt,2)))
+    ax.contourf(X,Y,array,colors,cmap=cmap,extend="both")
     plotmixer(usemixer,iter,ax)
     return ax
     
@@ -97,10 +98,11 @@ ax.set_ylim(0,H)
 ax.set_aspect('equal')
 
 initTvw(ax)
-maxframe = (int) (SimTime/dt)
-anim = animation.FuncAnimation(f,animatearray,interval=0.1,fargs=(maxframe,ax),frames=maxframe, blit = False)
+maxframe = 300 #(int) (SimTime/dt)     
+
+anim = animation.FuncAnimation(f,animatearray,interval=1,fargs=(maxframe,ax),frames=maxframe, blit = False)   
 plt.show()
 
-# f = r"Ufoirée.gif" 
+# f = r"VelocityMixe.gif" 
 # writergif = animation.PillowWriter(fps=15) 
 # anim.save(f, writer=writergif)
