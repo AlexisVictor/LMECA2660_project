@@ -1,4 +1,5 @@
 #include "poisson.h"
+
 // #include <mpi.h>
 
 /*Called by poisson_solver at each time step*/
@@ -7,23 +8,36 @@
 /*    -Impose zero mass flow here by changing value of U_star*/
 /*    -Fill vector rhs*/
 void computeRHS(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix *U, matrix *V)
-{
+{   
+    int i; int j;
 
-    //YOU MUST IMPOSE A ZERO-MASS FLOW HERE ...
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j< m; j++ ){
+    for ( i = 0; i < n; i++){
+        for ( j = 0; j< m; j++ ){
             // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
             rhs[i*m+j] = inv_delta_tx*(U->a[i+1][j+1]-U->a[i][j+1] + V->a[i+1][j+1]-V->a[i+1][j]); 
-            //notes pour trop tards: size of U = (m+1, n+2) and V = (m+1, n)
 
             /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
             /*Do not forget that the solution for the Poisson equation is defined within a constant.
             One point from Phi must then be set to an abritrary constant.*/
         }
     }
-
+    rhs[m+1] = 0;
 }
 
+void computeRHS2(double *rhs, PetscInt rowStart, PetscInt rowEnd, int m, int n, double inv_delta_tx, matrix *gradV)
+{
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j< m; j++ ){
+            // inv_delta_tx=dx/dt= (dx^2)/(dx*dt)
+            rhs[i*m+j] = gradV->a[i][j];
+
+            /*WRITE HERE (nabla dot u_star)/dt at each mesh point r*/
+            /*Do not forget that the solution for the Poisson equation is defined within a constant.
+            One point from Phi must then be set to an abritrary constant.*/
+        }
+    }
+    rhs[m+1] = 0;
+}
 /*To call at each time step after computation of U_star. This function solves the poisson equation*/
 /*and copies the solution of the equation into your vector Phi*/
 /*More than probably, you should need to add arguments to the prototype ... */
@@ -42,6 +56,7 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix
     Vec b = data->b;
     Vec x = data->x;
 
+
     /* Fill the right-hand-side vector : b */
     VecGetOwnershipRange(b, &rowStart, &rowEnd);
     VecGetArray(b, &rhs);
@@ -52,7 +67,7 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix
     /*Solve the linear system of equations */
     KSPSolve(sles, b, x);
     KSPGetIterationNumber(sles, &its);
-    PetscPrintf(PETSC_COMM_WORLD, "Solution to Poisson eqn in %d iterations \n", its);
+    //PetscPrintf(PETSC_COMM_WORLD, "Solution to Poisson eqn in %d iterations \n", its);
 
     VecGetArray(x, &sol);
 
@@ -67,72 +82,115 @@ void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix
     free(rhs);
 }
 
+void poisson_solver2(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *gradV, matrix *phi)
+{
+
+    /* Solve the linear system Ax = b for a 2-D poisson equation on a structured grid */
+    int its;
+    PetscInt rowStart, rowEnd;
+    PetscScalar *rhs, *sol;
+
+    KSP sles = data->sles;
+    Vec b = data->b;
+    Vec x = data->x;
+
+
+    /* Fill the right-hand-side vector : b */
+    VecGetOwnershipRange(b, &rowStart, &rowEnd);
+    VecGetArray(b, &rhs);
+    computeRHS2(rhs, rowStart, rowEnd, m, n, inv_delta_tx, gradV); /*MODIFY THE PROTOTYPE HERE*/
+    VecRestoreArray(b, &rhs);
+
+
+    /*Solve the linear system of equations */
+    KSPSolve(sles, b, x);
+    KSPGetIterationNumber(sles, &its);
+    //PetscPrintf(PETSC_COMM_WORLD, "Solution to Poisson eqn in %d iterations \n", its);
+
+    VecGetArray(x, &sol);
+
+
+    for(int r = rowStart; r<rowEnd; r++){
+        /*YOUR VECTOR PHI[...]*/ // = sol[r];
+        phi->data[r] = sol[r];
+    }
+
+    VecRestoreArray(x, &sol);
+    free(sol);
+    free(rhs);
+}
 /*This function is called only once during the simulation, i.e. in initialize_poisson_solver.*/
 /*In its current state, it inserts unity on the main diagonal.*/
 /*More than probably, you should need to add arguments to the prototype ... .*/
 /*Modification to do in this function : */
 /*   -Insert the correct factor in matrix A*/
 void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
-{
-    // int r;
-    // if bord 
+{   
+    int r;
     //coin inférieur gauche 
-    // MatSetValue(A, 0, 0 , -1.0, INSERT_VALUES);
-    // MatSetValue(A, 0, 1 , 0.5, INSERT_VALUES);
-    // MatSetValue(A, 0, m , 0.5, INSERT_VALUES);
-    // //coin superieur gauche 
-    // MatSetValue(A, m-1, m-1, -1.0, INSERT_VALUES);
-    // MatSetValue(A, m-1, m-2 , 0.5, INSERT_VALUES);
-    // MatSetValue(A, m-1, 2*m-1 , 0.5, INSERT_VALUES);
-    // //coin inférieur droit 
-    // MatSetValue(A, m*(n-1), m*(n-1), -1.0, INSERT_VALUES);
-    // MatSetValue(A, m*(n-1), m*(n-1)+1 , 0.5, INSERT_VALUES);
-    // MatSetValue(A, m*(n-1), m*(n-2) , 0.5, INSERT_VALUES);
-    // //coin supérieur droit 
-    // MatSetValue(A, m*n-1, m*n-1, -1.0, INSERT_VALUES);
-    // MatSetValue(A, m*n-1, m*n-2 , 0.5, INSERT_VALUES);
-    // MatSetValue(A, m*n-1, m*(n-1)-1 , 0.5, INSERT_VALUES);
-    // //bord gauche 
-    // for(r = 1; r < m-1; r++){
-    //     MatSetValue(A, r, r , -1.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
-    // }
-    // //bord droit 
-    // for(r = m*(n-1)+1; r < n*m-1; r++){
-    //     MatSetValue(A, r, r , -1.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
-    // }
-    // //bord inférieur 
-    // for(r = m; r < m*(n-1); r+=m){
-    //     MatSetValue(A, r, r , -1.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-m , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+m , 1.0/3.0, INSERT_VALUES);
-    // }
-    // //bord supérieur
-    // for(r = 2*m-1; r < m*n-1; r+=m){
-    //     MatSetValue(A, r, r , -1.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-1 , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-n , 1.0/3.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r+n , 1.0/3.0, INSERT_VALUES);
-    // }
-    // for (int i = 1; i < n-1; i++){
-    //     for (int j = 1; j< m-1; j++ ){
-    //     r = i*m+j;
-    //     MatSetValue(A, r, r , -1.0, INSERT_VALUES);
-    //     MatSetValue(A, r, r-1 , 0.25, INSERT_VALUES);
-    //     MatSetValue(A, r, r+1 , 0.25, INSERT_VALUES);
-    //     MatSetValue(A, r, r+m , 0.25, INSERT_VALUES);
-    //     MatSetValue(A, r, r-m , 0.25, INSERT_VALUES);
-    //     /*USING MATSETVALUE FUNCTION, INSERT THE GOOD FACTOR AT THE GOOD PLACE*/
-    //     /*Be careful; the solution from the system solved is defined within a constant.
-    //     One point from Phi must then be set to an abritrary constant.*/
-    //     }
-    // }
+    MatSetValue(A, 0, 0 , -2.0, INSERT_VALUES);
+    MatSetValue(A, 0, 1 , 1.0, INSERT_VALUES);
+    MatSetValue(A, 0, m , 1.0, INSERT_VALUES);
+    //coin superieur gauche 
+    MatSetValue(A, m-1, m-1, -2.0, INSERT_VALUES);
+    MatSetValue(A, m-1, m-2 , 1.0, INSERT_VALUES);
+    MatSetValue(A, m-1, 2*m-1 , 1.0, INSERT_VALUES);
+    //coin inférieur droit 
+    MatSetValue(A, m*(n-1), m*(n-1), -2.0, INSERT_VALUES);
+    MatSetValue(A, m*(n-1), m*(n-1)+1 , 1.0, INSERT_VALUES);
+    MatSetValue(A, m*(n-1), m*(n-2) , 1.0, INSERT_VALUES);
+    //coin supérieur droit 
+    MatSetValue(A, m*n-1, m*n-1, -2.0, INSERT_VALUES);
+    MatSetValue(A, m*n-1, m*n-2 , 1.0, INSERT_VALUES);
+    MatSetValue(A, m*n-1, m*(n-1)-1 , 1.0, INSERT_VALUES);
+    //bord gauche 
+    for(r = 1; r < m-1; r++){
+        MatSetValue(A, r, r , -3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0, INSERT_VALUES);
+    }
+    //bord droit 
+    for(r = m*(n-1)+1; r < n*m-1; r++){
+        MatSetValue(A, r, r , -3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0, INSERT_VALUES);
+    }
+    //bord inférieur 
+    for(r = m; r < m*(n-1); r+=m){
+        MatSetValue(A, r, r , -3.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0, INSERT_VALUES);
+    }
+    //bord supérieur
+    for(r = 2*m-1; r < m*n-1; r+=m){
+        MatSetValue(A, r, r , -3.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0, INSERT_VALUES);
+    }
+    for (int i = 1; i < n-1; i++){
+        for (int j = 1; j< m-1; j++ ){
+        r = i*m+j;
+        MatSetValue(A, r, r , -4.0, INSERT_VALUES);
+        MatSetValue(A, r, r-1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+1 , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r+m , 1.0, INSERT_VALUES);
+        MatSetValue(A, r, r-m , 1.0, INSERT_VALUES);
+        /*USING MATSETVALUE FUNCTION, INSERT THE GOOD FACTOR AT THE GOOD PLACE*/
+        /*Be careful; the solution from the system solved is defined within a constant.
+        One point from Phi must then be set to an arbitrary constant.*/
+        }
+    }
+    MatSetValue(A, m+1, m+1 , 1.0, INSERT_VALUES);
+    MatSetValue(A, m+1, 1 , 0.0, INSERT_VALUES);
+    MatSetValue(A, m+1, 2*m+1 , 0.0, INSERT_VALUES);
+    MatSetValue(A, m+1, m+2 , 0.0, INSERT_VALUES);
+    MatSetValue(A, m+1, m , 0.0, INSERT_VALUES);
+    
+    MatView(A,PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /*To call during the initialization of your solver, before the begin of the time loop*/
@@ -142,7 +200,7 @@ void computeLaplacianMatrix(Mat A, int rowStart, int rowEnd, int m, int n)
 /*   -Specify the number of non-zero diagonals in the sparse matrix*/
 PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
 {
-    printf("we are initilizing poisson \n");
+    //printf("we are initializing poisson \n");
     PetscInt rowStart = 0; /*rowStart = 0*/
     PetscInt rowEnd = m*n; /*rowEnd = the number of unknows*/
     PetscErrorCode ierr;
@@ -184,7 +242,7 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n)
     KSPSetUseFischerGuess(data->sles,1,4);
     KSPGMRESSetPreAllocateVectors(data->sles);
 
-    PetscPrintf(PETSC_COMM_WORLD, "Assembly of Mattrix and Vectors is done \n");
+    //PetscPrintf(PETSC_COMM_WORLD, "Assembly of Matrix and Vectors is done \n");
 
     return ierr;
 }
@@ -196,4 +254,19 @@ void free_poisson_solver(Poisson_data* data){
     VecDestroy(&(data->b));
     VecDestroy(&(data->x));
     KSPDestroy(&(data->sles));
+}
+
+
+void test_poisson(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *U, matrix *V, matrix *phi) {
+    int i, j;
+    poisson_solver(data, inv_delta_tx, m, n, U, V, phi);
+    FILE *ptr = fopen("./results/test_poisson.txt", "w");
+    fprintf(ptr, "%d\n", n);
+    for (j = 0; j < m; j++) {
+        for (i = 0; i < n; i++) {
+            fprintf(ptr, "%.4le ", phi->data[i*m+j]);
+        }
+        fprintf(ptr, "\n");
+    } 
+    fclose(ptr);
 }

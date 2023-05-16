@@ -28,5 +28,9 @@ PetscErrorCode initialize_poisson_solver(Poisson_data* data, int m, int n);
 void poisson_solver(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *U, matrix *V, matrix *phi);
 void free_poisson_solver(Poisson_data* data);
 
+
+void poisson_solver2(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *gradV, matrix *phi);
+void test_poisson(Poisson_data *data, double inv_delta_tx,int m, int n, matrix *U , matrix *V, matrix *phi);
+
 #endif
 
