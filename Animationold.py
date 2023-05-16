@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-m = 60
+m = 150
 n  = int(2/3*m)
 dt       = 1/300
 SimTime  = 1e4
@@ -18,7 +18,8 @@ L = 2/3*H
 x = np.linspace(0,L,num=n)
 y = np.linspace(0,H,num=m)
 X, Y = np.meshgrid(x,y)
-Tcolors = np.linspace(0,1e-10,num=100)
+# Tcolors = np.linspace(-1e-1,1e-1,num=100)
+Tcolors = np.linspace(0,5e-3,num=100)
 # vcolors = np.linspace(0,0.05,num=101)
 # wcolors = np.linspace(-2,2,num=101)
 
@@ -72,26 +73,8 @@ def plotmixer(bool, iter,ax):
         ax.fill_between(x,0,y,facecolor='black')
 
 
-def initTvw(ax):
-    array = fillarray("Velocity",0, n, m)
-    #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
-    #plt.colorbar(CS,ax=ax)
-    plotmixer(usemixer,0,ax)
-        
-	
-	
-def animatearray(iter,mf,ax,c):
-    array = fillarray("Velocity", iter, n, m)
-    ax.clear()
-    ax.set_xlim(0,L)
-    ax.set_ylim(0,H)
-    ax.set_title("iter = {}".format(iter))
-    ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
-    plotmixer(usemixer,iter,ax)
-    return ax
-
 # def initTvw(ax):
-#     array = fillarray("T",1, n+2, m+2)
+#     array = fillarray("U",0, n+1, m+2)
 #     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
 #     #plt.colorbar(CS,ax=ax)
 #     plotmixer(usemixer,0,ax)
@@ -99,7 +82,7 @@ def animatearray(iter,mf,ax,c):
 	
 	
 # def animatearray(iter,mf,ax,c):
-#     array = fillarray("T", iter, n+2, m+2)
+#     array = fillarray("U", iter, n+1, m+2)
 #     ax.clear()
 #     ax.set_xlim(0,L)
 #     ax.set_ylim(0,H)
@@ -107,6 +90,60 @@ def animatearray(iter,mf,ax,c):
 #     ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
 #     plotmixer(usemixer,iter,ax)
 #     return ax
+
+# def initTvw(ax):
+#     array = fillarray("Vorticity",0, n+1, m+1)
+#     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+#     #plt.colorbar(CS,ax=ax)
+#     plotmixer(usemixer,0,ax)
+        
+	
+	
+# def animatearray(iter,mf,ax,c):
+#     array = fillarray("Vorticity", iter, n+1, m+1)
+#     ax.clear()
+#     ax.set_xlim(0,L)
+#     ax.set_ylim(0,H)
+#     ax.set_title("iter = {}".format(iter))
+#     ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
+#     plotmixer(usemixer,iter,ax)
+#     return ax
+
+# def initTvw(ax):
+#     array = fillarray("Velocity",0, n, m)
+#     #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+#     #plt.colorbar(CS,ax=ax)
+#     plotmixer(usemixer,0,ax)
+        
+	
+	
+# def animatearray(iter,mf,ax,c):
+#     array = fillarray("Velocity", iter, n, m)
+#     ax.clear()
+#     ax.set_xlim(0,L)
+#     ax.set_ylim(0,H)
+#     ax.set_title("iter = {}".format(iter))
+#     ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
+#     plotmixer(usemixer,iter,ax)
+#     return ax
+
+def initTvw(ax):
+    array = fillarray("T",1, n+2, m+2)
+    #CS = ax.contourf(X,Y,array,Tcolors,cmap=cmap,extend="both")
+    #plt.colorbar(CS,ax=ax)
+    plotmixer(usemixer,0,ax)
+        
+	
+    
+def animatearray(iter,mf,ax,c):
+    array = fillarray("T", iter, n+2, m+2)
+    ax.clear()
+    ax.set_xlim(0,L)
+    ax.set_ylim(0,H)
+    ax.set_title("iter = {}".format(iter))
+    ax.contourf(X,Y,array,Tcolors,cmap=c,extend="both")
+    plotmixer(usemixer,iter,ax)
+    return ax
     
 
 f, ax = plt.subplots(1,1)
@@ -115,8 +152,8 @@ ax.set_ylim(0,H)
 ax.set_aspect('equal')
 
 initTvw(ax)
-maxframe = 460#(int) (SimTime/dt)
-anim = animation.FuncAnimation(f,animatearray,interval=10,fargs=(maxframe,ax,cmap1),frames=maxframe, blit = False)
+maxframe = 375#(int) (SimTime/dt)
+anim = animation.FuncAnimation(f,animatearray,interval=100,fargs=(maxframe,ax,cmap1),frames=maxframe, blit = False)
 plt.show()
 
 # f = r"Ufoirée.gif" 
