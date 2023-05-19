@@ -1,6 +1,6 @@
 #include "poisson.h"
 
-// #include <mpi.h>
+#include <mpi.h>
 
 /*Called by poisson_solver at each time step*/
 /*More than probably, you should need to add arguments to the prototype ... */

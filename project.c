@@ -93,21 +93,9 @@ int print_matrix(matrix *mat){
 }
 int convective_velocity(matrix *V, matrix *U, matrix *H_x, matrix *H_y, double deltax, double deltay, int m, int n){
     int i,j;
-    // for (j = 1; j<m+1; j++){
-    //     V->a[0][j] = -1.0/5.0 *(V->a[3][j] - 5*V->a[2][j] + 15*V->a[1][j]);
-    //     V->a[n+1][j] = -1.0/5.0 *(V->a[n+1-3][j] - 5*V->a[n+1-2][j] + 15*V->a[n+1-1][j]);
-    // }
-    // for (i = 1; i<n+1; i++){
-    //     U->a[i][0] = -1.0/5.0 *(U->a[i][3] - 5*U->a[i][2] + 15*U->a[i][1]);
-    //     U->a[i][m+1] = -1.0/5.0 *(U->a[i][m+1-3] - 5*U->a[i][m+1-2] + 15*U->a[i][m+1-1]);
-    // }
-    //calcul of the convective term away from the side of the domain 
     for (i = 1; i < n; i++){
         for (j = 1; j< m+1; j++ ){ // decalle les indices des V de 1 vers la droite 
-            // H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j]) 
-            //                 + 1.0/(4*deltay) * ((V->a[i][j+1] + V->a[i-1][j+1]) * (U->a[i][j+1] - U->a[i][j])
-            //                                   + (V->a[i-1][j] + V->a[i-1][j-1]) * (U->a[i][j] - U->a[i][j-1]));
-            H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j])  //ligne pas encore verif 
+            H_x->a[i][j] = 1.0/(4.0*deltax) * (U->a[i+1][j]*U->a[i+1][j] - U->a[i-1][j]*U->a[i-1][j])  
                             + 1.0/(4.0*deltay) * ((V->a[i][j] + V->a[i+1][j]) * (U->a[i][j+1] - U->a[i][j])
                                               + (V->a[i][j-1] + V->a[i+1][j-1]) * (U->a[i][j] - U->a[i][j-1]));
         }
@@ -170,7 +158,7 @@ int laplacian_velocity(matrix *LapU, matrix *LapV, matrix *U, matrix *V, double 
             } 
         }
     return 0;
-} // vite fait checked
+} 
 
 int laplacian_temperature(matrix *LapT, matrix *T, double deltax, double deltay, int m, int n){
     for (int i=1; i<n+1; i++){
@@ -180,7 +168,7 @@ int laplacian_temperature(matrix *LapT, matrix *T, double deltax, double deltay,
         }
     }
     return 0;
-} // checked vite fait
+} 
 
 int convective_temperature(matrix *Ht, matrix *T, matrix *U, matrix *V, double deltax, double deltay, int m, int n){
     for (int i=1; i<n+1; i++){
@@ -212,7 +200,7 @@ int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU
             Vestim->a[i][j] = temp*dt + V->a[i][j];
         }
         Uestim->a[i][0] = -0.2 *(Uestim->a[i][3] - 5.0*Uestim->a[i][2] + 15.0*Uestim->a[i][1]);
-        Uestim->a[i][m+1] = Uestim->a[i][m];  //-0.2 *(Uestim->a[i][m+1-3] - 5.0*Uestim->a[i][m+1-2] + 15.0*Uestim->a[i][m+1-1]);
+        Uestim->a[i][m+1] = Uestim->a[i][m]; 
     }
 
     for (j = 1; j< m+1; j++ ){
@@ -221,7 +209,7 @@ int evalEstimVelocity(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix *LapU
     }
 
     return 0;
-}   //probleme au niveau de T (faire la moyenne pour avoir T au point souhaité)
+}   
 
 int evalVelocity(matrix *phi, double dt, double deltax, double deltay, matrix *U, matrix *V, int m, int n, matrix *Uestim, matrix *Vestim){
     int i,j;
@@ -258,7 +246,6 @@ int evalTemperature(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, double d
             T->a[i][j] += temp*dt ;
         }
     }
-    /*Plus sur de l'ordre des index i et j à checker absolument!!!*/
     double l0 = 1e-3 ;
     for (int j=1;j<m+1; j++){
         //Left Surface : 
@@ -279,7 +266,7 @@ int evalTemperature(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, double d
         T->a[i][0] = -1.0/5 * (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
     }
     return 0;
-} //potentiel erreur au niveau des conditions limites mais a priori ok 
+}  
 
 int evalVelocity_norm( matrix* U, matrix* V, matrix* NormVelocity, int m, int n){
     double v,u;
@@ -296,7 +283,7 @@ int evalVelocity_norm( matrix* U, matrix* V, matrix* NormVelocity, int m, int n)
 int eval_vorticity(matrix* U, matrix* V, matrix* Vorticity, double deltax, double deltay, int m, int n){
     for (int i=0; i<n+1; i++){
         for(int j=0; j<m+1; j++){
-            Vorticity->a[i][j] = (V->a[i+1][j] - V->a[i][j])/deltax + (U->a[i][j+1] - U->a[i][j])/deltay;
+            Vorticity->a[i][j] = (V->a[i+1][j] - V->a[i][j])/deltax - (U->a[i][j+1] - U->a[i][j])/deltay;
         }
     }   
     return 0;
@@ -320,15 +307,16 @@ int evalEstimVelocityMixer(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix 
     double norm;
     double Us;
     double Vs;
+    double tol = deltax/2;
 
     for (j = 1; j< m+1; j++ ){
         for (i = 1; i < n; i++){
 
             xu = i*deltax;
             yu = j*deltay - deltay/2;
-            theta = atan2(yu-yg, xu-xg);
+            theta = fabs(xu-xg) > tol ? atan2(yu-yg, xu-xg) : (xu-xg)/fabs(xu-xg)*M_PI/2;
             norm = sqrt((xu-xg)*(xu-xg)+(yu-yg)*(yu-yg));
-            chiU = (norm<a*cos(3*(theta+iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0 ;
+            chiU = (norm<a*cos(3*(theta-iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0 ;
             Us = omega*(yu-yg);
 
             temp = -1.0/2.0*(3.0*Hx->a[i][j] - Hxold->a[i][j]) - grad_Px->a[i][j] + pow(Gr,-1.0/2.0)*LapU->a[i][j] + chiU*Us/dtau;
@@ -341,16 +329,16 @@ int evalEstimVelocityMixer(matrix *U, matrix *V, matrix *Hy, matrix *Hx, matrix 
         for (j = 1; j< m; j++){
             xv = i*deltax - deltax/2;
             yv = j*deltay;
-            theta = atan2(yv-yg, xv-xg);
+            theta = fabs(xv-xg) > tol ? atan2(yv-yg, xv-xg) : (xv-xg)/fabs(xv-xg)*M_PI/2;
             norm = sqrt((xv-xg)*(xv-xg)+(yv-yg)*(yv-yg));
-            chiV = (norm<a*cos(3*(theta+iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0 ;
+            chiV = (norm<a*cos(3*(theta-iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0 ;
             Vs = omega*(xv-xg) ;
 
             temp = -1.0/2.0*(3.0*Hy->a[i][j] - Hyold->a[i][j]) - grad_Py->a[i][j] + pow(Gr,-1.0/2.0)*LapV->a[i][j] + (T->a[i][j]+T->a[i][j+1])/2.0 + chiV*Vs/dtau ;
             Vestim->a[i][j] = (temp + V->a[i][j]/dt)/(1.0/dt + chiV/dtau);
         }
         Uestim->a[i][0] = -1.0/5 *(Uestim->a[i][3] - 5.0*Uestim->a[i][2] + 15.0*Uestim->a[i][1]);
-        Uestim->a[i][m+1] =  Uestim->a[i][m]; //-1.0/5.0 *(U->a[i][m+1-3] - 5*U->a[i][m+1-2] + 15*U->a[i][m+1-1]-16*Uestim->a[i][m]);
+        Uestim->a[i][m+1] =  Uestim->a[i][m]; 
     }
 
     return 0;
@@ -361,7 +349,7 @@ double evalTemperatureMixer(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, 
     double temp; 
     int i,j;
     double xT,yT;
-    double xg = L /2.0;
+    double xg = L/2.0;
     double yg = xg;
     double D = 3.0/5.0*L;
     double a = D/2 ;
@@ -372,13 +360,14 @@ double evalTemperatureMixer(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, 
     double norm;
     double Ts = 0;
     double nelem = 0;
+    double tol = deltax/2;
 
     for (i = 1; i < n+1; i++){
         for (j = 1; j< n+1; j++){
             xT = i*deltax - deltax/2;
             yT = j*deltay - deltay/2;
             norm = sqrt((xT-xg)*(xT-xg)+(yT-yg)*(yT-yg));
-            theta = atan2(xT-xg, xT-xg);
+            theta = fabs(xT-xg) > tol ? atan2(yT-yg, xT-xg) : (xT-xg)/fabs(xT-xg)*M_PI/2;
             nelem += norm<(D/2) ? 1.0 : 0.0 ;
             Ts += norm<(D/2) ? T->a[i][j] : 0.0 ;
         }
@@ -389,8 +378,8 @@ double evalTemperatureMixer(matrix *T, matrix *Ht, matrix *Htold, matrix *LapT, 
             xT = i*deltax - deltax/2;
             yT = j*deltay - deltay/2;
             norm = sqrt((xT-xg)*(xT-xg)+(yT-yg)*(yT-yg));
-            theta = atan2(yT-yg, xT-xg);
-            chiT = (norm<a*cos(3*(theta+iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0;
+            theta = fabs(xT-xg) > tol ? atan2(yT-yg, xT-xg) : (xT-xg)/fabs(xT-xg)*M_PI/2;
+            chiT = (norm<a*cos(3*(theta-iter*omega*dt))) || (norm<halfd) ? 1.0 : 0.0;
             temp = -1.0/2.0*(3.0*Ht->a[i][j] - Htold->a[i][j]) +  pow(Gr,-1.0/2.0)*1.0/Pr*LapT->a[i][j] + chiT*Ts/dtau;
             T->a[i][j] = (temp + T->a[i][j]/dt)/(1.0/dt + chiT/dtau);
         }
@@ -455,261 +444,167 @@ int Diagnostic(FILE* fileflux, FILE* fileavtemp, FILE* fileRmstemp, FILE* fileav
 
 
 int main(int argc, char *argv[]){
-    int Sim=0;
+    int mixer = 1; // 1 to mix
+    double H = 1.0;//1.5*L;
+    double L = H/1.5;
 
+    int m =  300; 
+    int n = (int) (2.0/3*m);
 
-    if(Sim==0){
-        double H = 1.0;//1.5*L;
-        double L = H/1.5;
-
-        int m = 60 ; 
-        int n = (int) (2.0/3*m);
-    
-        double deltax = L/n; //to specify 
-        double deltay = H/m; //to specify 
-
-        // sprintf("deltax = %.6e \t; deltay = %.6e \n", deltax, deltay);
-        // printf("n = %d \t; m = %d \n", n, m);
-
-        double SimTime = 1000; //to specify
-        double t = 0.0;
-        // double dt = 1.0/300.0;
-        double dt= 1.0/30;  //(60.0*1.5);//1.0/75.0; //to specify
-        double dtau = 1e-3*dt;
-        double Pr = 4.0;
-        double Gr = 1e10;
-        double Ts = 0;
-        int iter = 0;
-        int niter = 50;
-            
-        int i,j;
-
-        /*WRITE YOUR PROJECT ...*/
-        matrix *U = callocate_matrix(m+2, n+1); 
-        matrix *V = callocate_matrix(m+1, n+2);
-        matrix *Vorticity = callocate_matrix(m+1, n+1);
-        matrix *NormVelocity = callocate_matrix(m,n);
-        matrix *LapU = callocate_matrix(m+2, n+1);
-        matrix *LapV = callocate_matrix(m+1, n+2);
-        matrix *Vestim = callocate_matrix(m+1, n+2);
-        matrix *Uestim = callocate_matrix(m+2, n+1);
-        matrix *grad_Px = callocate_matrix(m+2, n+1);
-        matrix *grad_Py = callocate_matrix(m+1, n+2);
-        matrix *Hx = callocate_matrix(m+2, n+1); 
-        matrix *Hxold = callocate_matrix(m+2, n+1);
-        matrix *Hy = callocate_matrix(m+1, n+2);
-        matrix *Hyold = callocate_matrix(m+1, n+2);
-        matrix *P = callocate_matrix(m, n); 
-        matrix *T = callocate_matrix(m+2, n+2); 
-        matrix *LapT = callocate_matrix(m+2, n+2);
-        matrix *Ht = callocate_matrix(m+2, n+2);
-        matrix *phi = callocate_matrix(m, n); 
-        matrix *Htold = callocate_matrix(m+2, n+2);
-        Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
-        double inv_delta_tx = deltax/dt;
-
-        MatrixWriteFile("U", iter, U, t);
-        MatrixWriteFile("V", iter, V, t);
-        MatrixWriteFile("Vestim", iter, Vestim, t);
-        MatrixWriteFile("P", iter, P, t);
-        MatrixWriteFile("phi", iter, phi, t);
-        MatrixWriteFile("Velocity", iter, NormVelocity, t);
-        MatrixWriteFile("Vorticity", iter, Vorticity, t);
-        double l0 = 1e-3;
-        for (int i=1;i<n+1; i++){
-        //Free Surface : 
-        T->a[i][m+1] = ((2*l0-deltay)/(2*l0+deltay))*T->a[i][m];
-        //double Tgamma = ((4*l0-deltay)/(4*l0+deltay))*T->a[i][m];
-        //T->a[i][m+1] = -1.0/5.0 * (T->a[i][m-2]-5*T->a[i][m-1]+15*T->a[i][m]-16*Tgamma);
-
-        //Bottom Surface : 
-        T->a[i][0] = T->a[i][1]+deltay;
-        // Tgamma = deltay/2 + T->a[i][1];
-        // T->a[i][0] = -1.0/5 * (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
-        }
-        MatrixWriteFile("T", iter, T, t);
-
-        FILE* fileavflux = fopen("results/Fluxaverage.txt","w");
-        if (fileavflux == NULL) {
-            printf("Error : cannot create result file : did you create the output directory ? \n");
-            exit(0); }
-        FILE* fileavtemp = fopen("results/Temperatureaverage.txt","w");
-        if (fileavtemp == NULL) {
-            printf("Error : cannot create result file : did you create the output directory ? \n");
-            exit(0); }
-        FILE* filermstemp = fopen("results/RmsTemperature.txt","w");
-        if (filermstemp == NULL) {
-            printf("Error : cannot create result file : did you create the output directory ? \n");
-            exit(0); }
-        FILE* fileavTmixer = fopen("results/TcylAverage.txt","w");
-        if (filermstemp == NULL) {
-            printf("Error : cannot create result file : did you create the output directory ? \n");
-            exit(0); }
-
-            
-        Diagnostic(fileavflux, fileavtemp, filermstemp,fileavTmixer, T, m, n, L, H, Ts, iter);
-
-
-        PetscInitialize(&argc, &argv, 0, 0);    
-        initialize_poisson_solver(data, m, n);
-
-        while (t<SimTime){
-
-            copy_matrix(Hxold, Hx);
-            copy_matrix(Hyold, Hy);
-            copy_matrix(Htold, Ht);
+    double deltax = L/n; //to specify 
+    double deltay = H/m; //to specify 
+    double SimTime = 3000; //to specify
+    double t = 0.0;
+    double dt = 1.0/300.0;
+    double dtau = 1e-3*dt;
+    double Pr = 4.0;
+    double Gr = 1e10;
+    double Ts = 0;
+    int iter = 0;
+    int niter = 500;
         
-            //convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
-            convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
-            convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
-            laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
-            laplacian_temperature(LapT, T, deltax, deltay, m, n); 
-            pressure_gradure(grad_Px, grad_Py, P, deltax, deltay, m, n);
+    int i,j;
 
-            evalEstimVelocityMixer(U, V, Hy, Hx, LapU, LapV,
-                         Hyold, Hxold, grad_Px, grad_Py, T, Uestim, Vestim, m, n, dt, Gr, dtau, L, deltax, deltay, iter);
+    /*WRITE YOUR PROJECT ...*/
+    matrix *U = callocate_matrix(m+2, n+1); 
+    matrix *V = callocate_matrix(m+1, n+2);
+    matrix *Vorticity = callocate_matrix(m+1, n+1);
+    matrix *NormVelocity = callocate_matrix(m,n);
+    matrix *LapU = callocate_matrix(m+2, n+1);
+    matrix *LapV = callocate_matrix(m+1, n+2);
+    matrix *Vestim = callocate_matrix(m+1, n+2);
+    matrix *Uestim = callocate_matrix(m+2, n+1);
+    matrix *grad_Px = callocate_matrix(m+2, n+1);
+    matrix *grad_Py = callocate_matrix(m+1, n+2);
+    matrix *Hx = callocate_matrix(m+2, n+1); 
+    matrix *Hxold = callocate_matrix(m+2, n+1);
+    matrix *Hy = callocate_matrix(m+1, n+2);
+    matrix *Hyold = callocate_matrix(m+1, n+2);
+    matrix *P = callocate_matrix(m, n); 
+    matrix *T = callocate_matrix(m+2, n+2); 
+    matrix *LapT = callocate_matrix(m+2, n+2);
+    matrix *Ht = callocate_matrix(m+2, n+2);
+    matrix *phi = callocate_matrix(m, n); 
+    matrix *Htold = callocate_matrix(m+2, n+2);
+    Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
+    double inv_delta_tx = deltax/dt;
 
-            // evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py,
-            //                  T, Uestim, Vestim, m, n, dt, Gr); 
-            
-            
-            /* Poisson */
-            
-            poisson_solver(data, inv_delta_tx, m,  n, Uestim, Vestim, phi);
-            
-            
-            // MatrixWriteFile("phi", iter, phi, t);
-            evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
+    MatrixWriteFile("U", iter, U, t);
+    MatrixWriteFile("V", iter, V, t);
+    MatrixWriteFile("Vestim", iter, Vestim, t);
+    MatrixWriteFile("P", iter, P, t);
+    MatrixWriteFile("phi", iter, phi, t);
+    MatrixWriteFile("Velocity", iter, NormVelocity, t);
+    MatrixWriteFile("Vorticity", iter, Vorticity, t);
+    double l0 = 1e-3;
+    for (int i=1;i<n+1; i++){
+    //Free Surface : 
+    T->a[i][m+1] = ((2*l0-deltay)/(2*l0+deltay))*T->a[i][m];
+    //double Tgamma = ((4*l0-deltay)/(4*l0+deltay))*T->a[i][m];
+    //T->a[i][m+1] = -1.0/5.0 * (T->a[i][m-2]-5*T->a[i][m-1]+15*T->a[i][m]-16*Tgamma);
 
-            for (i = 0; i < n; i++){
-                for (j = 0; j< m; j++){
-                    P->a[i][j] += phi->a[i][j];
-                }
-            }
+    //Bottom Surface : 
+    T->a[i][0] = T->a[i][1]+deltay;
+    // Tgamma = deltay/2 + T->a[i][1];
+    // T->a[i][0] = -1.0/5 * (T->a[i][3]-5*T->a[i][2]+15*T->a[i][1]-16*Tgamma);
+    }
+    MatrixWriteFile("T", iter, T, t);
 
-            Ts = evalTemperatureMixer(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr, dtau, L, iter);
-            // evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
-            evalVelocity_norm(U,V, NormVelocity, m, n);
-            eval_vorticity(U, V, Vorticity, deltax, deltay, m, n);
+    FILE* fileavflux = fopen("results/Fluxaverage.txt","w");
+    if (fileavflux == NULL) {
+        printf("Error : cannot create result file : did you create the output directory ? \n");
+        exit(0); }
+    FILE* fileavtemp = fopen("results/Temperatureaverage.txt","w");
+    if (fileavtemp == NULL) {
+        printf("Error : cannot create result file : did you create the output directory ? \n");
+        exit(0); }
+    FILE* filermstemp = fopen("results/RmsTemperature.txt","w");
+    if (filermstemp == NULL) {
+        printf("Error : cannot create result file : did you create the output directory ? \n");
+        exit(0); }
+    FILE* fileavTmixer = fopen("results/TcylAverage.txt","w");
+    if (filermstemp == NULL) {
+        printf("Error : cannot create result file : did you create the output directory ? \n");
+        exit(0); }
 
-            iter++;
-            t += dt;
-            
-            
-            if (iter%niter==0){
-                printf("time = %f \n", t);
-                MatrixWriteFile("U", iter/niter, U, t);
-                MatrixWriteFile("P", iter/niter, P, t);
-                MatrixWriteFile("T", iter/niter, T, t);
-                MatrixWriteFile("V", iter/niter, V, t);
-                MatrixWriteFile("Vestim", iter/niter, Vestim, t);
-                MatrixWriteFile("Velocity", iter/niter, NormVelocity, t);
-                MatrixWriteFile("Gradpy", iter/niter, grad_Py, t);
-                MatrixWriteFile("LapV", iter/niter, LapV, t);
-                MatrixWriteFile("Hy", iter/niter, Hy, t);
-                MatrixWriteFile("phi", iter/niter, phi, t);
-                MatrixWriteFile("Vorticity", iter/niter, Vorticity, t);
-                Diagnostic(fileavflux, fileavtemp, filermstemp, fileavTmixer, T, m, n, L, H, Ts, iter);
+        
+    Diagnostic(fileavflux, fileavtemp, filermstemp,fileavTmixer, T, m, n, L, H, Ts, iter);
+
+
+    PetscInitialize(&argc, &argv, 0, 0);    
+    initialize_poisson_solver(data, m, n);
+
+    while (t<SimTime){
+
+        copy_matrix(Hxold, Hx);
+        copy_matrix(Hyold, Hy);
+        copy_matrix(Htold, Ht);
+    
+        convective_velocity_div(V, U, Hx, Hy, deltax, deltay, m, n);
+        // convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n); // if use of the advective form
+        convective_temperature(Ht, T, U, V, deltax, deltay, m, n);
+        laplacian_velocity(LapU, LapV, U, V, deltax, deltay, m, n); 
+        laplacian_temperature(LapT, T, deltax, deltay, m, n); 
+        pressure_gradure(grad_Px, grad_Py, P, deltax, deltay, m, n);
+        if (mixer)
+            evalEstimVelocityMixer(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py, T, Uestim, Vestim, m, n, dt, Gr, dtau, L, deltax, deltay, iter);
+        else
+            evalEstimVelocity(U, V, Hy, Hx, LapU, LapV, Hyold, Hxold, grad_Px, grad_Py, T, Uestim, Vestim, m, n, dt, Gr); 
+        /* Poisson */
+        poisson_solver(data, inv_delta_tx, m,  n, Uestim, Vestim, phi);
+        evalVelocity(phi,  dt,  deltax,  deltay, U, V, m, n, Uestim, Vestim);
+
+        for (i = 0; i < n; i++){
+            for (j = 0; j< m; j++){
+                P->a[i][j] += phi->a[i][j];
             }
         }
-
-        fclose(fileavflux);
-        fclose(fileavtemp);
-        fclose(filermstemp);
-        fclose(fileavTmixer);
-
-        free_poisson_solver( data); 
-        PetscFinalize();
-        free_matrix(V);
-        free_matrix(U); 
-        free_matrix(Vestim);
-        free_matrix(Uestim);
-        free_matrix(P); 
-        free_matrix(T); 
-        free_matrix(phi); 
-        free_matrix(Hy);
-        free_matrix(Hx);
-        free_matrix(Ht);
-        free_matrix(Hyold);
-        free_matrix(Hxold); 
-        free_matrix(Htold);
-        free_matrix(grad_Px);
-        free_matrix(grad_Py);
-        free_matrix(LapU);
-        free_matrix(LapV);
-        free_matrix(LapT); 
+        if (mixer)
+            Ts = evalTemperatureMixer(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr, dtau, L, iter);
+        else
+            evalTemperature(T, Ht, Htold, LapT, deltax, deltay, m, n, Pr, dt, Gr);
+        evalVelocity_norm(U,V, NormVelocity, m, n);
+        eval_vorticity(U, V, Vorticity, deltax, deltay, m, n);
+        iter++;
+        t += dt;
+        if (iter%niter==0){
+            printf("time = %f \n", t);
+            MatrixWriteFile("U", iter/niter, U, t);
+            MatrixWriteFile("P", iter/niter, P, t);
+            MatrixWriteFile("T", iter/niter, T, t);
+            MatrixWriteFile("V", iter/niter, V, t);
+            MatrixWriteFile("Vestim", iter/niter, Vestim, t);
+            MatrixWriteFile("Velocity", iter/niter, NormVelocity, t);
+            MatrixWriteFile("Gradpy", iter/niter, grad_Py, t);
+            MatrixWriteFile("LapV", iter/niter, LapV, t);
+            MatrixWriteFile("Hy", iter/niter, Hy, t);
+            MatrixWriteFile("phi", iter/niter, phi, t);
+            MatrixWriteFile("Vorticity", iter/niter, Vorticity, t);
+            Diagnostic(fileavflux, fileavtemp, filermstemp, fileavTmixer, T, m, n, L, H, Ts, iter);
+        }
     }
-    
-    else{
-        // int n = 3;
-        // int m = 3;
-        // matrix *phi = callocate_matrix(m, n); 
-        // matrix *U = callocate_matrix(m+2, n+1);
-        // matrix *Uold = callocate_matrix(m+2, n+1);
-        // matrix *V = callocate_matrix(m+1, n+2); 
-        // // matrix *Hx = callocate_matrix(m+2, n+1); 
-        // // matrix *Hxold = callocate_matrix(m+2, n+1);
-        // // matrix *Hyold = callocate_matrix(m+1, n+2);
-        // matrix *Hy = callocate_matrix(m+1, n+2);
-        // //matrix *gradV = callocate_matrix(m, n); 
-
-        // matrix *phi_div = callocate_matrix(m, n); 
-        // matrix *U_div = callocate_matrix(m+2, n+1);
-        // matrix *V_div = callocate_matrix(m+1, n+2); 
-        // matrix *Hx_div = callocate_matrix(m+2, n+1); 
-        // // matrix *Hxold = callocate_matrix(m+2, n+1);
-        // // matrix *Hyold = callocate_matrix(m+1, n+2);
-        // matrix *Hy_div = callocate_matrix(m+1, n+2);
-        // int i,j;
-        // for (i = 1; i < n; i++){
-        //     for (j = 1; j< m+1; j++){
-        //         U->a[i][j] = i*(m+1)+j+1;
-        //         U_div->a[i][j] = i*(m+1)+j+1;
-        //     }
-        // }
-
-        // // for (i = 1; i < m+1; i++){
-        // //     for (j = 1; j< n; j++){
-        // //         V->a[i][j] = i-j;
-        // //         V_div->a[i][j] = i-j;
-        // //     }
-        // // }
-        // printf("this is matrix U \n");
-        // print_matrix(U);
-        // copy_matrix(Uold,U);
-        // U->a[1][1]= 8.5;
-        // printf("this is matrix U \n");
-        // print_matrix(U);
-        // printf("this is matrix Uold \n");
-        // print_matrix(Uold);
-
-        // // convective_velocity(V, U, Hx, Hy, deltax, deltay, m, n);
-        // // convective_velocity_div(V_div, U_div, Hx_div, Hy_div, deltax, deltay, m, n);
-        // // printf("This is div convective velocity Hy\n");
-        // // print_matrix(Hy_div);
-        // // printf("This is convective velocity Hy\n");
-        // // print_matrix(Hy);
-        // // printf("This is div convective velocity Hx\n");
-        // // print_matrix(Hx_div);
-        // // printf("This is convective velocity Hx\n");
-        // // print_matrix(Hx);
-        // // printf("This is U_div\n");
-        // // print_matrix(U_div);
-        // // printf("This is U\n");
-        // // print_matrix(U);
-        // // printf("This is V_div\n");
-        // // print_matrix(V_div);
-        // // printf("This is V\n");
-        // // print_matrix(V);
-        // // MatrixWriteFile("U", 0, U, 0);
-        // // MatrixWriteFile("V", 0, V, 0);
-        // // PetscInitialize(&argc, &argv, 0, 0);
-        // // Poisson_data *data = (Poisson_data *)malloc(sizeof(Poisson_data));
-        // // initialize_poisson_solver(data, m, n);
-        // // test_poisson(data, dxdt, m, n, U, V, phi);
-        // // free_poisson_solver( data);
-        // free_matrix(phi); 
-        // free_matrix(U); 
-        // free_matrix(V); 
-    }
+    fclose(fileavflux);
+    fclose(fileavtemp);
+    fclose(filermstemp);
+    fclose(fileavTmixer);
+    free_poisson_solver( data); 
+    PetscFinalize();
+    free_matrix(V);
+    free_matrix(U); 
+    free_matrix(Vestim);
+    free_matrix(Uestim);
+    free_matrix(P); 
+    free_matrix(T); 
+    free_matrix(phi); 
+    free_matrix(Hy);
+    free_matrix(Hx);
+    free_matrix(Ht);
+    free_matrix(Hyold);
+    free_matrix(Hxold); 
+    free_matrix(Htold);
+    free_matrix(grad_Px);
+    free_matrix(grad_Py);
+    free_matrix(LapU);
+    free_matrix(LapV);
+    free_matrix(LapT);  
 }
